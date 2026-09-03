@@ -22,15 +22,24 @@ async function readData() {
   }
 }
 
+// Barcha sinflar ro'yxatini shakllantirish (7-sinfdan boshlab Tabiiy sinflar qo'shilgan)
 function getClassButtons() {
   const classes = [];
   for (let i = 5; i <= 11; i++) {
     classes.push(`${i}-A`, `${i}-B`);
+    if (i >= 7) {
+      classes.push(`${i}-D (Tabiiy)`);
+    }
   }
 
   const keyboard = [];
   for (let i = 0; i < classes.length; i += 3) {
-    keyboard.push(classes.slice(i, i + 3).map(cls => ({ text: `${cls} sinf`, callback_data: `class_${cls}` })));
+    keyboard.push(
+      classes.slice(i, i + 3).map(cls => ({
+        text: `${cls} sinf`,
+        callback_data: `class_${cls}`
+      }))
+    );
   }
 
   return keyboard;
