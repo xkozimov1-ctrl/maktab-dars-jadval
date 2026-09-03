@@ -22,7 +22,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Fayldan ma'lumot o'qish va yozish funksiyalari
+// Fayldan ma'lumot o'qish va yozish
 async function readData() {
   try {
     const data = await fs.readFile(DATA_FILE, 'utf-8');
@@ -36,23 +36,21 @@ async function writeData(data) {
   await fs.writeFile(DATA_FILE, JSON.stringify(data, null, 2), 'utf-8');
 }
 
-// Admin Token tekshiruvchi Middleware
+// Token tekshiruvchi Middleware
 function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 
-  if (!token) return res.status(0x191).json({ error: "Token topilmadi!" });
+  if (!token) return res.status(401).json({ error: "Token topilmadi!" });
 
   jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) return res.status(0x193).json({ error: "Yaroqsiz token!" });
+    if (err) return res.status(403).json({ error: "Yaroqsiz token!" });
     req.user = user;
     next();
   });
 }
 
-// --- API ENDPOINTLAR ---
-
-// 1. Admin login (Token olish)
+// API Endpoints
 app.post('/api/login', (req, res) => {
   const { password } = req.body;
   if (password === ADMIN_PASSWORD) {
@@ -62,13 +60,11 @@ app.post('/api/login', (req, res) => {
   res.status(401).json({ success: false, message: 'Parol noto\'g\'ri!' });
 });
 
-// 2. Barcha dars jadvalini olish (Public)
 app.get('/api/timetable', async (req, res) => {
   const data = await readData();
   res.json(data);
 });
 
-// 3. Darsni saqlash yoki yangilash (Faqat Admin)
 app.post('/api/timetable/lesson', authenticateToken, async (req, res) => {
   const { className, day, lessonIndex, lessonData } = req.body;
 
@@ -82,7 +78,6 @@ app.post('/api/timetable/lesson', authenticateToken, async (req, res) => {
   res.json({ success: true, message: 'Dars saqlandi!' });
 });
 
-// 4. Darsni o'chirish (Faqat Admin)
 app.delete('/api/timetable/lesson', authenticateToken, async (req, res) => {
   const { className, day, lessonIndex } = req.body;
 
@@ -95,7 +90,6 @@ app.delete('/api/timetable/lesson', authenticateToken, async (req, res) => {
   res.json({ success: true, message: 'Dars o\'chirildi!' });
 });
 
-// 5. Soatlar sonini o'zgartirish (Faqat Admin)
 app.post('/api/timetable/count', authenticateToken, async (req, res) => {
   const { className, day, count } = req.body;
 
@@ -108,7 +102,6 @@ app.post('/api/timetable/count', authenticateToken, async (req, res) => {
   res.json({ success: true, message: 'Soatlar soni yangilandi!' });
 });
 
-// Serverni ishga tushirish
 app.listen(PORT, () => {
   console.log(`🚀 Server ishga tushdi: http://localhost:${PORT}`);
 });

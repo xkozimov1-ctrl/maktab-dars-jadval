@@ -4,7 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Maktab Dars Jadvali</title>
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- html2canvas (Rasm qilib yuklab olish uchun) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script>
     tailwind.config = { darkMode: 'class' }
   </script>
@@ -24,6 +27,7 @@
 <body class="bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-white min-h-screen p-4 md:p-6 transition-colors duration-300">
 
   <div class="max-w-7xl mx-auto">
+    
     <!-- Header -->
     <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-md transition-all">
       <div class="flex items-center gap-3 cursor-pointer select-none group" id="secretHeader" title="Admin uchun 3 marta bosing">
@@ -35,12 +39,27 @@
       
       <div class="flex items-center gap-3 flex-wrap">
         <label for="classSelect" class="font-semibold text-sm">Sinf:</label>
-        <select id="classSelect" class="p-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 font-bold text-blue-600 dark:text-blue-400 cursor-pointer focus:ring-2 focus:ring-blue-500 outline-none">
+        <select id="classSelect" class="p-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 font-bold text-blue-600 dark:text-blue-400 cursor-pointer focus:ring-2 focus:ring-blue-500 outline-none transition-all">
         </select>
 
         <button id="themeToggleBtn" class="px-3 py-2 text-sm rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 active:scale-95 transition-all">
           🌙 Qorong'u
         </button>
+
+        <!-- Yuklab olish -->
+        <div class="relative inline-block text-left group">
+          <button id="downloadBtn" class="px-3 py-2 text-sm rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 active:scale-95 font-semibold transition-all shadow-md flex items-center gap-1.5">
+            📥 Yuklab olish
+          </button>
+          <div class="hidden group-hover:block absolute right-0 mt-1 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-xl border dark:border-gray-700 z-50 p-1 animate-fade-in">
+            <button onclick="downloadAsImage()" class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg flex items-center gap-2">
+              🖼️ Rasm ko'rinishida (PNG)
+            </button>
+            <button onclick="downloadAsJSON()" class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg flex items-center gap-2">
+              📄 Zaxira (JSON)
+            </button>
+          </div>
+        </div>
 
         <button id="logoutBtn" class="hidden px-3 py-2 text-sm rounded-lg bg-red-600 text-white hover:bg-red-700 active:scale-95 font-semibold transition-all shadow-md">
           🚪 Chiqish
@@ -48,8 +67,9 @@
       </div>
     </div>
 
-    <!-- Grid -->
+    <!-- Jadval Grid -->
     <div id="timetableGrid" class="grid grid-cols-1 md:grid-cols-5 gap-4"></div>
+
   </div>
 
   <!-- Admin Login Modal -->
@@ -70,7 +90,7 @@
     </div>
   </div>
 
-  <!-- Lesson Edit Modal -->
+  <!-- Darsni tahrirlash Modali -->
   <div id="lessonModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
     <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl max-w-md w-full shadow-2xl animate-slide-down">
       <h3 id="modalTitle" class="text-xl font-bold mb-4">Darsni tahrirlash</h3>
@@ -233,7 +253,7 @@
       });
     }
 
-    // Secret Admin Login Trigger
+    // Admin login ochish
     function openLoginModal() {
       if (adminToken) return;
       loginError.classList.add('hidden');
@@ -262,7 +282,6 @@
       }
     });
 
-    // Login Form
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       try {
@@ -294,7 +313,6 @@
       renderTimetable();
     });
 
-    // Soatlar sonini o'zgartirish
     window.changeLessonCount = async function(day, delta) {
       if (!adminToken) return;
       const currentCount = serverData.lessonCounts?.[selectedClass]?.[day] || 6;
@@ -312,7 +330,6 @@
       fetchTimetable();
     };
 
-    // Modal & Dars Tahrirlash
     window.openModal = function(day, lessonIndex) {
       if (!adminToken) return;
       currentCell = { day, lessonIndex };
@@ -383,6 +400,48 @@
       const isDark = document.documentElement.classList.contains('dark');
       themeToggleBtn.textContent = isDark ? '☀️ Yorug\'' : '🌙 Qorong\'u';
     });
+
+    // Rasm va JSON yuklab olish funksiyalari
+    async function downloadAsImage() {
+      const element = document.getElementById('timetableGrid');
+      const classText = document.getElementById('classSelect').value;
+
+      const downloadBtn = document.getElementById('downloadBtn');
+      const originalText = downloadBtn.innerHTML;
+      downloadBtn.innerHTML = '⏳ Tayyorlanmoqda...';
+      downloadBtn.disabled = true;
+
+      try {
+        const canvas = await html2canvas(element, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: document.documentElement.classList.contains('dark') ? '#111827' : '#f3f4f6'
+        });
+
+        const link = document.createElement('a');
+        link.download = `Dars_Jadvali_${classText}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      } catch (err) {
+        alert("Rasmga aylantirishda xatolik yuz berdi!");
+        console.error(err);
+      } finally {
+        downloadBtn.innerHTML = originalText;
+        downloadBtn.disabled = false;
+      }
+    }
+
+    function downloadAsJSON() {
+      const classText = document.getElementById('classSelect').value;
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(serverData, null, 2));
+      
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `Dars_Jadvali_${classText}_zaxira.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
 
     init();
   </script>
