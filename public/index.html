@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Maktab Dars Jadvali</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' }
+  </script>
+  <style>
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-20px) scale(0.95); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+    .animate-slide-down { animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+  </style>
+</head>
+<body class="bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-white min-h-screen p-4 md:p-6 transition-colors duration-300">
+
+  <div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-md transition-all">
+      <div class="flex items-center gap-3 cursor-pointer select-none group" id="secretHeader" title="Admin uchun 3 marta bosing">
+        <h1 class="text-2xl font-bold group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">📚 Maktab Dars Jadvali</h1>
+        <span id="roleBadge" class="text-xs px-2.5 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 font-semibold transition-all">
+          👁️ O'quvchi (Ko'rish rejimi)
+        </span>
+      </div>
+      
+      <div class="flex items-center gap-3 flex-wrap">
+        <label for="classSelect" class="font-semibold text-sm">Sinf:</label>
+        <select id="classSelect" class="p-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 font-bold text-blue-600 dark:text-blue-400 cursor-pointer focus:ring-2 focus:ring-blue-500 outline-none">
+        </select>
+
+        <button id="themeToggleBtn" class="px-3 py-2 text-sm rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 active:scale-95 transition-all">
+          🌙 Qorong'u
+        </button>
+
+        <button id="logoutBtn" class="hidden px-3 py-2 text-sm rounded-lg bg-red-600 text-white hover:bg-red-700 active:scale-95 font-semibold transition-all shadow-md">
+          🚪 Chiqish
+        </button>
+      </div>
+    </div>
+
+    <!-- Grid -->
+    <div id="timetableGrid" class="grid grid-cols-1 md:grid-cols-5 gap-4"></div>
+  </div>
+
+  <!-- Admin Login Modal -->
+  <div id="loginModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl max-w-sm w-full shadow-2xl animate-slide-down">
+      <h3 class="text-xl font-bold mb-4">🔑 Admin sifatida kirish</h3>
+      <form id="loginForm" class="space-y-4">
+        <div>
+          <label class="block text-sm mb-1 font-medium">Parolni kiriting:</label>
+          <input type="password" id="passwordInput" required class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Parol...">
+          <p id="loginError" class="text-xs text-red-500 mt-1.5 hidden animate-pulse">Parol noto'g'ri!</p>
+        </div>
+        <div class="flex justify-end gap-2">
+          <button type="button" id="closeLoginBtn" class="px-4 py-2 border rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-95">Bekor qilish</button>
+          <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:scale-95 shadow-md">Kirish</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Lesson Edit Modal -->
+  <div id="lessonModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl max-w-md w-full shadow-2xl animate-slide-down">
+      <h3 id="modalTitle" class="text-xl font-bold mb-4">Darsni tahrirlash</h3>
+      <form id="lessonForm" class="space-y-4">
+        <div>
+          <label class="block text-sm mb-1 font-medium">Fan nomi</label>
+          <input type="text" id="subjectInput" required class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Masalan: Matematika">
+        </div>
+        <div>
+          <label class="block text-sm mb-1 font-medium">O'qituvchi ismi</label>
+          <input type="text" id="teacherInput" class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Masalan: A. Karimov">
+        </div>
+        <div>
+          <label class="block text-sm mb-1 font-medium">Xona raqami</label>
+          <input type="text" id="roomInput" class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Masalan: 204">
+        </div>
+
+        <div class="flex justify-between items-center pt-4 border-t dark:border-gray-700">
+          <button type="button" id="deleteBtn" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 active:scale-95 shadow-md">O'chirish</button>
+          <div class="flex gap-2">
+            <button type="button" id="closeModalBtn" class="px-4 py-2 border rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-95">Bekor qilish</button>
+            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:scale-95 shadow-md">Saqlash</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    let adminToken = localStorage.getItem('adminToken') || null;
+    const days = ['Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma'];
+    let selectedClass = '5-A';
+    let currentCell = { day: '', lessonIndex: null };
+    let serverData = { timetable: {}, lessonCounts: {} };
+
+    function generateClasses() {
+      const classes = [];
+      for (let i = 5; i <= 11; i++) {
+        classes.push(`${i}-A`, `${i}-B`);
+        if (i >= 7) classes.push(`${i}-D (Tabiiy)`);
+      }
+      return classes;
+    }
+
+    const classList = generateClasses();
+
+    const classSelect = document.getElementById('classSelect');
+    const timetableGrid = document.getElementById('timetableGrid');
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const roleBadge = document.getElementById('roleBadge');
+    const secretHeader = document.getElementById('secretHeader');
+
+    const loginModal = document.getElementById('loginModal');
+    const loginForm = document.getElementById('loginForm');
+    const passwordInput = document.getElementById('passwordInput');
+    const loginError = document.getElementById('loginError');
+    const closeLoginBtn = document.getElementById('closeLoginBtn');
+
+    const lessonModal = document.getElementById('lessonModal');
+    const lessonForm = document.getElementById('lessonForm');
+    const modalTitle = document.getElementById('modalTitle');
+    const subjectInput = document.getElementById('subjectInput');
+    const teacherInput = document.getElementById('teacherInput');
+    const roomInput = document.getElementById('roomInput');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const deleteBtn = document.getElementById('deleteBtn');
+
+    async function fetchTimetable() {
+      try {
+        const res = await fetch('/api/timetable');
+        serverData = await res.json();
+        renderTimetable();
+      } catch (err) {
+        console.error("Ma'lumot olishda xato:", err);
+      }
+    }
+
+    function init() {
+      classList.forEach(cls => {
+        const option = document.createElement('option');
+        option.value = cls;
+        option.textContent = `${cls} sinf`;
+        classSelect.appendChild(option);
+      });
+
+      fetchTimetable();
+    }
+
+    function renderTimetable() {
+      timetableGrid.innerHTML = '';
+      const isAdmin = !!adminToken;
+
+      if (isAdmin) {
+        roleBadge.className = "text-xs px-2.5 py-1 rounded-full bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 font-semibold";
+        roleBadge.textContent = "⚡ Admin rejimi (Tahrirlash faol)";
+        logoutBtn.classList.remove('hidden');
+      } else {
+        roleBadge.className = "text-xs px-2.5 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 font-semibold";
+        roleBadge.textContent = "👁️ O'quvchi (Ko'rish rejimi)";
+        logoutBtn.classList.add('hidden');
+      }
+
+      days.forEach((day, index) => {
+        const dayCard = document.createElement('div');
+        dayCard.className = 'bg-white dark:bg-gray-800 rounded-2xl shadow-md hover:shadow-lg p-4 flex flex-col justify-between animate-fade-in transition-all duration-300';
+        dayCard.style.animationDelay = `${index * 0.08}s`;
+        
+        const currentCount = serverData.lessonCounts?.[selectedClass]?.[day] || 6;
+
+        let lessonsHTML = '';
+        for (let i = 0; i < currentCount; i++) {
+          const lesson = serverData.timetable?.[selectedClass]?.[day]?.[i];
+          const hasData = lesson && lesson.subject;
+
+          const cursorClass = isAdmin ? 'cursor-pointer hover:scale-[1.02] active:scale-[0.98] hover:border-blue-500 hover:shadow-md' : 'cursor-default';
+          const clickHandler = isAdmin ? `onclick="openModal('${day}', ${i})"` : '';
+
+          lessonsHTML += `
+            <div ${clickHandler} 
+                 class="p-3 rounded-xl border-2 ${hasData ? 'border-blue-500/30 bg-blue-50/50 dark:bg-gray-700/40 dark:border-blue-400/30' : 'border-dashed border-gray-300 dark:border-gray-600'} ${cursorClass} transition-all duration-200 min-h-[80px] flex flex-col justify-between mb-3">
+              <div class="flex justify-between items-start">
+                <span class="text-xs font-bold text-gray-400">${i + 1}-soat</span>
+                ${lesson?.room ? `<span class="text-xs bg-gray-200 dark:bg-gray-600 px-1.5 py-0.5 rounded-md font-medium">${lesson.room}-xona</span>` : ''}
+              </div>
+              ${hasData ? `
+                <div class="mt-1">
+                  <div class="font-bold text-sm leading-tight text-gray-800 dark:text-gray-100">${lesson.subject}</div>
+                  <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">${lesson.teacher || ''}</div>
+                </div>
+              ` : `
+                <div class="text-xs text-gray-400 text-center py-1 font-medium">${isAdmin ? "+ Qo'shish" : '—'}</div>
+              `}
+            </div>
+          `;
+        }
+
+        const adminControlsHTML = isAdmin ? `
+          <div class="flex gap-2 pt-3 border-t dark:border-gray-700 mt-1">
+            <button onclick="changeLessonCount('${day}', 1)" class="flex-1 py-1.5 px-2 text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 rounded-lg hover:bg-blue-200 active:scale-95 font-semibold transition-all">
+              + 1 soat
+            </button>
+            ${currentCount > 1 ? `
+              <button onclick="changeLessonCount('${day}', -1)" title="Soatni kamaytirish" class="py-1.5 px-3 text-xs bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 active:scale-95 font-semibold transition-all">
+                -
+              </button>
+            ` : ''}
+          </div>
+        ` : '';
+
+        dayCard.innerHTML = `
+          <div>
+            <h2 class="text-lg font-bold text-center mb-3 pb-2 border-b dark:border-gray-700 text-blue-600 dark:text-blue-400 tracking-wide">${day}</h2>
+            <div>${lessonsHTML}</div>
+          </div>
+          ${adminControlsHTML}
+        `;
+
+        timetableGrid.appendChild(dayCard);
+      });
+    }
+
+    // Secret Admin Login Trigger
+    function openLoginModal() {
+      if (adminToken) return;
+      loginError.classList.add('hidden');
+      passwordInput.value = '';
+      loginModal.classList.remove('hidden');
+      passwordInput.focus();
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'a') {
+        e.preventDefault();
+        openLoginModal();
+      }
+    });
+
+    let clickCount = 0;
+    let clickTimer = null;
+    secretHeader.addEventListener('click', () => {
+      clickCount++;
+      if (clickCount === 1) {
+        clickTimer = setTimeout(() => { clickCount = 0; }, 1000);
+      } else if (clickCount === 3) {
+        clearTimeout(clickTimer);
+        clickCount = 0;
+        openLoginModal();
+      }
+    });
+
+    // Login Form
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: passwordInput.value })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          adminToken = data.token;
+          localStorage.setItem('adminToken', adminToken);
+          loginModal.classList.add('hidden');
+          renderTimetable();
+        } else {
+          loginError.classList.remove('hidden');
+        }
+      } catch (err) {
+        alert("Server bilan bog'lanishda xato!");
+      }
+    });
+
+    closeLoginBtn.addEventListener('click', () => loginModal.classList.add('hidden'));
+
+    logoutBtn.addEventListener('click', () => {
+      adminToken = null;
+      localStorage.removeItem('adminToken');
+      renderTimetable();
+    });
+
+    // Soatlar sonini o'zgartirish
+    window.changeLessonCount = async function(day, delta) {
+      if (!adminToken) return;
+      const currentCount = serverData.lessonCounts?.[selectedClass]?.[day] || 6;
+      const newCount = Math.max(1, currentCount + delta);
+
+      await fetch('/api/timetable/count', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminToken}`
+        },
+        body: JSON.stringify({ className: selectedClass, day, count: newCount })
+      });
+
+      fetchTimetable();
+    };
+
+    // Modal & Dars Tahrirlash
+    window.openModal = function(day, lessonIndex) {
+      if (!adminToken) return;
+      currentCell = { day, lessonIndex };
+      const lesson = serverData.timetable?.[selectedClass]?.[day]?.[lessonIndex] || {};
+
+      modalTitle.textContent = `Darsni tahrirlash (${day}, ${lessonIndex + 1}-soat)`;
+      subjectInput.value = lesson.subject || '';
+      teacherInput.value = lesson.teacher || '';
+      roomInput.value = lesson.room || '';
+
+      lessonModal.classList.remove('hidden');
+    };
+
+    closeModalBtn.addEventListener('click', () => lessonModal.classList.add('hidden'));
+
+    lessonForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!adminToken) return;
+
+      const { day, lessonIndex } = currentCell;
+
+      await fetch('/api/timetable/lesson', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminToken}`
+        },
+        body: JSON.stringify({
+          className: selectedClass,
+          day,
+          lessonIndex,
+          lessonData: {
+            subject: subjectInput.value,
+            teacher: teacherInput.value,
+            room: roomInput.value
+          }
+        })
+      });
+
+      lessonModal.classList.add('hidden');
+      fetchTimetable();
+    });
+
+    deleteBtn.addEventListener('click', async () => {
+      if (!adminToken) return;
+      const { day, lessonIndex } = currentCell;
+
+      await fetch('/api/timetable/lesson', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminToken}`
+        },
+        body: JSON.stringify({ className: selectedClass, day, lessonIndex })
+      });
+
+      lessonModal.classList.add('hidden');
+      fetchTimetable();
+    });
+
+    classSelect.addEventListener('change', (e) => {
+      selectedClass = e.target.value;
+      renderTimetable();
+    });
+
+    themeToggleBtn.addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+      const isDark = document.documentElement.classList.contains('dark');
+      themeToggleBtn.textContent = isDark ? '☀️ Yorug\'' : '🌙 Qorong\'u';
+    });
+
+    init();
+  </script>
+</body>
+</html>
