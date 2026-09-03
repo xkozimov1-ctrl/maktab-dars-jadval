@@ -105,3 +105,5 @@ app.post('/api/timetable/count', authenticateToken, async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server ishga tushdi: http://localhost:${PORT}`);
 });
+// server.js fayli oxiriga qo'shiladi:
+import './bot.js';
