@@ -5,7 +5,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
-import './bot.js'; // Botni birga ishga tushirish
+import { initBot } from './bot.js';
 
 dotenv.config();
 
@@ -101,4 +101,8 @@ app.post('/api/timetable/count', authenticateToken, async (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`🚀 Server ishga tushdi: http://localhost:${PORT}`);
+  
+  setTimeout(() => {
+    initBot();
+  }, 2000);
 });
