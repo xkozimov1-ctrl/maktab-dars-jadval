@@ -4,9 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Maktab Dars Jadvali</title>
-  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- html2canvas (Rasm qilib yuklab olish uchun) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script>
     tailwind.config = { darkMode: 'class' }
@@ -27,8 +25,6 @@
 <body class="bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-white min-h-screen p-4 md:p-6 transition-colors duration-300">
 
   <div class="max-w-7xl mx-auto">
-    
-    <!-- Header -->
     <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-md transition-all">
       <div class="flex items-center gap-3 cursor-pointer select-none group" id="secretHeader" title="Admin uchun 3 marta bosing">
         <h1 class="text-2xl font-bold group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">📚 Maktab Dars Jadvali</h1>
@@ -46,7 +42,6 @@
           🌙 Qorong'u
         </button>
 
-        <!-- Yuklab olish -->
         <div class="relative inline-block text-left group">
           <button id="downloadBtn" class="px-3 py-2 text-sm rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 active:scale-95 font-semibold transition-all shadow-md flex items-center gap-1.5">
             📥 Yuklab olish
@@ -67,12 +62,9 @@
       </div>
     </div>
 
-    <!-- Jadval Grid -->
     <div id="timetableGrid" class="grid grid-cols-1 md:grid-cols-5 gap-4"></div>
-
   </div>
 
-  <!-- Admin Login Modal -->
   <div id="loginModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
     <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl max-w-sm w-full shadow-2xl animate-slide-down">
       <h3 class="text-xl font-bold mb-4">🔑 Admin sifatida kirish</h3>
@@ -90,7 +82,6 @@
     </div>
   </div>
 
-  <!-- Darsni tahrirlash Modali -->
   <div id="lessonModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
     <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl max-w-md w-full shadow-2xl animate-slide-down">
       <h3 id="modalTitle" class="text-xl font-bold mb-4">Darsni tahrirlash</h3>
@@ -253,7 +244,6 @@
       });
     }
 
-    // Admin login ochish
     function openLoginModal() {
       if (adminToken) return;
       loginError.classList.add('hidden');
@@ -401,7 +391,6 @@
       themeToggleBtn.textContent = isDark ? '☀️ Yorug\'' : '🌙 Qorong\'u';
     });
 
-    // Rasm va JSON yuklab olish funksiyalari
     async function downloadAsImage() {
       const element = document.getElementById('timetableGrid');
       const classText = document.getElementById('classSelect').value;

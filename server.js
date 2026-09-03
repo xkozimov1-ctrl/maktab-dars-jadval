@@ -5,6 +5,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
+import './bot.js'; // Botni birga ishga tushirish
 
 dotenv.config();
 
@@ -17,12 +18,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const DATA_FILE = path.join(__dirname, 'data', 'timetable.json');
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Fayldan ma'lumot o'qish va yozish
 async function readData() {
   try {
     const data = await fs.readFile(DATA_FILE, 'utf-8');
@@ -36,7 +35,6 @@ async function writeData(data) {
   await fs.writeFile(DATA_FILE, JSON.stringify(data, null, 2), 'utf-8');
 }
 
-// Token tekshiruvchi Middleware
 function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -50,7 +48,6 @@ function authenticateToken(req, res, next) {
   });
 }
 
-// API Endpoints
 app.post('/api/login', (req, res) => {
   const { password } = req.body;
   if (password === ADMIN_PASSWORD) {
@@ -105,5 +102,3 @@ app.post('/api/timetable/count', authenticateToken, async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server ishga tushdi: http://localhost:${PORT}`);
 });
-// server.js fayli oxiriga qo'shiladi:
-import './bot.js';
