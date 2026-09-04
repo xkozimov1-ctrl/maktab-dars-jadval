@@ -28,9 +28,9 @@ function getClassButtons() {
     '6A', '6B',
     '7A', '7B', '7D',
     '8A', '8B', '8D',
-    '9A', '9B', '9D', '9A(U)',
-    '10A', '10B', '10D', '10A(U)', '10B(U)',
-    '11A', '11B', '11D', '11A(U)'
+    '9A', '9B', '9D', '9A(Ingliz)',
+    '10A', '10B', '10D', '10A(Ingliz)', '10B(Ingliz)',
+    '11A', '11B', '11D', '11A(Ingliz)'
   ];
 
   const keyboard = [];
