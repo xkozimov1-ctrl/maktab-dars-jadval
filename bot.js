@@ -22,15 +22,16 @@ async function readData() {
   }
 }
 
-// Barcha sinflar ro'yxatini shakllantirish (7-sinfdan boshlab Tabiiy sinflar qo'shilgan)
 function getClassButtons() {
-  const classes = [];
-  for (let i = 5; i <= 11; i++) {
-    classes.push(`${i}-A`, `${i}-B`);
-    if (i >= 7) {
-      classes.push(`${i}-D (Tabiiy)`);
-    }
-  }
+  const classes = [
+    '5A', '5B',
+    '6A', '6B',
+    '7A', '7B', '7D',
+    '8A', '8B', '8D',
+    '9A', '9B', '9D', '9A(U)',
+    '10A', '10B', '10D', '10A(U)', '10B(U)',
+    '11A', '11B', '11D', '11A(U)'
+  ];
 
   const keyboard = [];
   for (let i = 0; i < classes.length; i += 3) {
