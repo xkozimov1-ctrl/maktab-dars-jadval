@@ -1,110 +1,121 @@
 import express from 'express';
 import cors from 'cors';
-import jwt from 'jsonwebtoken';
-import fs from 'node:fs/promises';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
+import jwt from 'jsonwebtoken';
 import multer from 'multer';
+import fs from 'fs/promises';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { GoogleGenAI } from '@google/genai';
-import { initBot } from './bot.js';
 
 dotenv.config();
 
-const app = express();
-const PORT = process.env.PORT || 3000;
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'maktabadmin1234';
-const JWT_SECRET = process.env.JWT_SECRET || 'secret_key';
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const DATA_FILE = path.join(__dirname, 'data', 'timetable.json');
 
-const upload = multer({ storage: multer.memoryStorage() });
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
+const app = express();
+const PORT = process.env.PORT || 3000;
+const JWT_SECRET = process.env.JWT_SECRET || 'maktab_dars_jadvali_secret_key_2026';
+const DATA_FILE = path.join(__dirname, 'data.json');
 
+// Gemini AI Klientini sozlash
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+// Middleware
 app.use(cors());
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Multer (Xotirada fayllarni saqlash)
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 } // Maksimal 10MB
+});
+
+// Ma'lumotlarni o'qish va yozish funksiyalari
 async function readData() {
   try {
-    const data = await fs.readFile(DATA_FILE, 'utf-8');
+    const data = await fs.readFile(DATA_FILE, 'utf8');
     return JSON.parse(data);
-  } catch (error) {
+  } catch (err) {
     return { timetable: {}, lessonCounts: {} };
   }
 }
 
 async function writeData(data) {
-  await fs.writeFile(DATA_FILE, JSON.stringify(data, null, 2), 'utf-8');
+  await fs.writeFile(DATA_FILE, JSON.stringify(data, null, 2), 'utf8');
 }
 
+// JWT Tokenni tekshirish Middleware
 function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 
-  if (!token) return res.status(401).json({ error: "Token topilmadi!" });
+  if (!token) {
+    return res.status(401).json({ error: "Avtorizatsiyadan o'tilmagan!" });
+  }
 
   jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) return res.status(403).json({ error: "Yaroqsiz token!" });
+    if (err) return res.status(403).json({ error: "Token yaroqsiz yoki muddati o'tgan!" });
     req.user = user;
     next();
   });
 }
 
-app.post('/api/login', (req, res) => {
+// ================= API ENDPOINTS =================
+
+// 1. Admin login
+app.post('/api/admin/login', (req, res) => {
   const { password } = req.body;
-  if (password === ADMIN_PASSWORD) {
-    const token = jwt.sign({ role: 'admin' }, JWT_SECRET, { expiresIn: '8h' });
+  const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+
+  if (password === adminPassword) {
+    const token = jwt.sign({ role: 'admin' }, JWT_SECRET, { expiresIn: '24h' });
     return res.json({ success: true, token });
   }
-  res.status(401).json({ success: false, message: 'Parol noto\'g\'ri!' });
+  
+  res.status(401).json({ error: "Parol noto'g'ri!" });
 });
 
-app.get('/api/timetable', async (req, res) => {
-  const data = await readData();
-  res.json(data);
-});
+// 2. Dars jadvalini olish (Abituriyent va O'quvchilar uchun ochiq)
+app.get('/api/timetable/:className', async (req, res) => {
+  try {
+    const data = await readData();
+    const className = req.params.className;
+    
+    const schedule = data.timetable?.[className] || {};
+    const counts = data.lessonCounts?.[className] || {};
 
-app.post('/api/timetable/lesson', authenticateToken, async (req, res) => {
-  const { className, day, lessonIndex, lessonData } = req.body;
-
-  const data = await readData();
-  if (!data.timetable[className]) data.timetable[className] = {};
-  if (!data.timetable[className][day]) data.timetable[className][day] = [];
-
-  data.timetable[className][day][lessonIndex] = lessonData;
-
-  await writeData(data);
-  res.json({ success: true, message: 'Dars saqlandi!' });
-});
-
-app.delete('/api/timetable/lesson', authenticateToken, async (req, res) => {
-  const { className, day, lessonIndex } = req.body;
-
-  const data = await readData();
-  if (data.timetable[className]?.[day]?.[lessonIndex] !== undefined) {
-    data.timetable[className][day][lessonIndex] = null;
-    await writeData(data);
+    res.json({ timetable: schedule, lessonCounts: counts });
+  } catch (err) {
+    res.status(500).json({ error: "Ma'lumotlarni yuklashda xatolik!" });
   }
-
-  res.json({ success: true, message: 'Dars o\'chirildi!' });
 });
 
-app.post('/api/timetable/count', authenticateToken, async (req, res) => {
-  const { className, day, count } = req.body;
+// 3. Dars jadvalini saqlash (Admin)
+app.post('/api/timetable/save', authenticateToken, async (req, res) => {
+  try {
+    const { className, timetable, lessonCounts } = req.body;
 
-  const data = await readData();
-  if (!data.lessonCounts[className]) data.lessonCounts[className] = {};
+    if (!className) {
+      return res.status(400).json({ error: "Sinf nomi ko'rsatilmadi!" });
+    }
 
-  data.lessonCounts[className][day] = count;
+    const data = await readData();
+    if (!data.timetable) data.timetable = {};
+    if (!data.lessonCounts) data.lessonCounts = {};
 
-  await writeData(data);
-  res.json({ success: true, message: 'Soatlar soni yangilandi!' });
+    data.timetable[className] = timetable;
+    data.lessonCounts[className] = lessonCounts;
+
+    await writeData(data);
+    res.json({ success: true, message: "Dars jadvali muvaffaqiyatli saqlandi!" });
+  } catch (err) {
+    res.status(500).json({ error: "Saqlashda xatolik yuz berdi!" });
+  }
 });
 
-// GEMINI AI ORQALI FAYLNI O'QISH
+// 4. Gemini AI orqali faylni/rasmni tahlil qilib dars jadvaliga o'tkazish
 app.post('/api/timetable/upload', authenticateToken, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
@@ -116,8 +127,12 @@ app.post('/api/timetable/upload', authenticateToken, upload.single('file'), asyn
       return res.status(400).json({ error: "Sinf tanlanmagan!" });
     }
 
-    const prompt = `Ushbu fayldagi/rasmdagi "${className}" sinf dars jadvalini o'qib oling.
-Natijani FAQAT QUYIDAGI SOF JSON FORMATIDA qaytaring (hech qanday markdown \`\`\`json belgilari va ortiqcha matnlarsiz):
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(500).json({ error: "Render platformasida GEMINI_API_KEY sozlanmagan!" });
+    }
+
+    const prompt = `Ushbu rasmdagi/hujjatdagi "${className}" sinfining dars jadvalini aniq o'qib oling.
+Javobni FAQAT QUYIDAGI SOF JSON FORMATIDA qaytaring (hech qanday markdown \`\`\`json belgilari va ortiqcha tushuntirishlarsiz):
 {
   "Dushanba": [{"subject": "Fan nomi", "teacher": "O'qituvchi", "room": "Xona"}],
   "Seshanba": [],
@@ -125,7 +140,9 @@ Natijani FAQAT QUYIDAGI SOF JSON FORMATIDA qaytaring (hech qanday markdown \`\`\
   "Payshanba": [],
   "Juma": []
 }
-Agar katak bo'sh bo'lsa subject, teacher, room qiymatini bo'sh string "" qiling. Kun nomlari faqat Dushanba, Seshanba, Chorshanba, Payshanba, Juma bo'lsin.`;
+Ahamiyat bering:
+1. Katak bo'sh bo'lsa subject, teacher va room qiymatlarini bo'sh matn "" qiling.
+2. Kun nomlari faqat Dushanba, Seshanba, Chorshanba, Payshanba, Juma ko'rinishida bo'lsin.`;
 
     const imagePart = {
       inlineData: {
@@ -134,14 +151,18 @@ Agar katak bo'sh bo'lsa subject, teacher, room qiymatini bo'sh string "" qiling.
       }
     };
 
+    // Gemini 2.5 Flash modelidan foydalanish
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: [prompt, imagePart]
     });
 
     let text = response.text.trim();
-    if (text.startsWith('```json')) text = text.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-    else if (text.startsWith('```')) text = text.replace(/^```\s*/, '').replace(/\s*```$/, '');
+    if (text.startsWith('```json')) {
+      text = text.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+    } else if (text.startsWith('```')) {
+      text = text.replace(/^```\s*/, '').replace(/\s*```$/, '');
+    }
 
     const parsedTimetable = JSON.parse(text);
 
@@ -150,25 +171,28 @@ Agar katak bo'sh bo'lsa subject, teacher, room qiymatini bo'sh string "" qiling.
     if (!data.lessonCounts) data.lessonCounts = {};
 
     data.timetable[className] = parsedTimetable;
+    
     if (!data.lessonCounts[className]) data.lessonCounts[className] = {};
-
     Object.keys(parsedTimetable).forEach(day => {
       data.lessonCounts[className][day] = parsedTimetable[day].length;
     });
 
     await writeData(data);
-    res.json({ success: true, message: `${className} sinfi uchun dars jadvali AI orqali to'ldirildi!` });
+    res.json({ success: true, message: `${className} sinfi uchun jadval AI orqali to'ldirildi!` });
 
   } catch (error) {
-    console.error("AI Upload error:", error);
-    res.status(500).json({ error: "Faylni tahlil qilishda xatolik yuz berdi. Gemini API kalitingiz va fayl formatini tekshiring." });
+    console.error("AI Upload xatosi:", error);
+    res.status(500).json({ 
+      error: error.message || "Faylni AI orqali tahlil qilishda xatolik yuz berdi." 
+    });
   }
 });
 
+// SPA router qo'llab-quvvatlash
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 app.listen(PORT, () => {
-  console.log(`🚀 Server ishga tushdi: http://localhost:${PORT}`);
-  
-  setTimeout(() => {
-    initBot();
-  }, 2000);
+  console.log(`Server ${PORT}-portda muvaffaqiyatli ishga tushdi.`);
 });
