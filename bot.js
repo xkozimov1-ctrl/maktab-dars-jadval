@@ -1,26 +1,11 @@
 import { createRequire } from 'node:module';
-import fs from 'node:fs/promises';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
+import { readData } from './db.js';
 
 const require = createRequire(import.meta.url);
 const TelegramBot = require('node-telegram-bot-api');
 
 dotenv.config();
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const DATA_FILE = path.join(__dirname, 'data', 'timetable.json');
-
-async function readData() {
-  try {
-    const data = await fs.readFile(DATA_FILE, 'utf-8');
-    return JSON.parse(data);
-  } catch (error) {
-    return { timetable: {}, lessonCounts: {} };
-  }
-}
 
 function getClassButtons() {
   const classes = [

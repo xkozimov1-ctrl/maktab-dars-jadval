@@ -3,12 +3,11 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
 import multer from 'multer';
-import fs from 'fs/promises';
-import { existsSync, writeFileSync, mkdirSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { GoogleGenAI } from '@google/genai';
 import { initBot } from './bot.js';
+import { readData, writeData } from './db.js';
 
 dotenv.config();
 
@@ -18,24 +17,6 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'maktab_dars_jadvali_secret_key_2026';
-
-// XATOLIK EDI: bu yerda "data.json" (root papkada) ishlatilgan, lekin bot.js
-// "data/timetable.json" faylini o'qiydi. Natijada bot va sayt HECH QACHON
-// bir xil ma'lumotni ko'rmasdi. Ikkalasini bitta faylga moslashtirdik.
-const DATA_DIR = path.join(__dirname, 'data');
-const DATA_FILE = path.join(DATA_DIR, 'timetable.json');
-
-if (!existsSync(DATA_DIR)) {
-  mkdirSync(DATA_DIR, { recursive: true });
-}
-
-if (!existsSync(DATA_FILE)) {
-  try {
-    writeFileSync(DATA_FILE, JSON.stringify({ timetable: {}, lessonCounts: {} }, null, 2), 'utf8');
-  } catch (e) {
-    console.error("timetable.json yaratishda xatolik:", e);
-  }
-}
 
 // Middleware
 app.use(cors());
@@ -48,24 +29,6 @@ const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 }
 });
-
-// Ma'lumotlarni o'qish va yozish
-async function readData() {
-  try {
-    const data = await fs.readFile(DATA_FILE, 'utf8');
-    return JSON.parse(data);
-  } catch (err) {
-    return { timetable: {}, lessonCounts: {} };
-  }
-}
-
-async function writeData(data) {
-  try {
-    await fs.writeFile(DATA_FILE, JSON.stringify(data, null, 2), 'utf8');
-  } catch (err) {
-    console.error("Faylga yozishda xatolik:", err);
-  }
-}
 
 // JWT Tokenni tekshirish Middleware
 function authenticateToken(req, res, next) {
