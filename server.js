@@ -5,6 +5,8 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
+import multer from 'multer';
+import { GoogleGenAI } from '@google/genai';
 import { initBot } from './bot.js';
 
 dotenv.config();
@@ -18,8 +20,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const DATA_FILE = path.join(__dirname, 'data', 'timetable.json');
 
+const upload = multer({ storage: multer.memoryStorage() });
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
+
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 async function readData() {
@@ -97,6 +102,67 @@ app.post('/api/timetable/count', authenticateToken, async (req, res) => {
 
   await writeData(data);
   res.json({ success: true, message: 'Soatlar soni yangilandi!' });
+});
+
+// GEMINI AI ORQALI FAYLNI O'QISH
+app.post('/api/timetable/upload', authenticateToken, upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "Fayl yuklanmadi!" });
+    }
+
+    const { className } = req.body;
+    if (!className) {
+      return res.status(400).json({ error: "Sinf tanlanmagan!" });
+    }
+
+    const prompt = `Ushbu fayldagi/rasmdagi "${className}" sinf dars jadvalini o'qib oling.
+Natijani FAQAT QUYIDAGI SOF JSON FORMATIDA qaytaring (hech qanday markdown \`\`\`json belgilari va ortiqcha matnlarsiz):
+{
+  "Dushanba": [{"subject": "Fan nomi", "teacher": "O'qituvchi", "room": "Xona"}],
+  "Seshanba": [],
+  "Chorshanba": [],
+  "Payshanba": [],
+  "Juma": []
+}
+Agar katak bo'sh bo'lsa subject, teacher, room qiymatini bo'sh string "" qiling. Kun nomlari faqat Dushanba, Seshanba, Chorshanba, Payshanba, Juma bo'lsin.`;
+
+    const imagePart = {
+      inlineData: {
+        data: req.file.buffer.toString('base64'),
+        mimeType: req.file.mimetype
+      }
+    };
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: [prompt, imagePart]
+    });
+
+    let text = response.text.trim();
+    if (text.startsWith('```json')) text = text.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+    else if (text.startsWith('```')) text = text.replace(/^```\s*/, '').replace(/\s*```$/, '');
+
+    const parsedTimetable = JSON.parse(text);
+
+    const data = await readData();
+    if (!data.timetable) data.timetable = {};
+    if (!data.lessonCounts) data.lessonCounts = {};
+
+    data.timetable[className] = parsedTimetable;
+    if (!data.lessonCounts[className]) data.lessonCounts[className] = {};
+
+    Object.keys(parsedTimetable).forEach(day => {
+      data.lessonCounts[className][day] = parsedTimetable[day].length;
+    });
+
+    await writeData(data);
+    res.json({ success: true, message: `${className} sinfi uchun dars jadvali AI orqali to'ldirildi!` });
+
+  } catch (error) {
+    console.error("AI Upload error:", error);
+    res.status(500).json({ error: "Faylni tahlil qilishda xatolik yuz berdi. Gemini API kalitingiz va fayl formatini tekshiring." });
+  }
 });
 
 app.listen(PORT, () => {

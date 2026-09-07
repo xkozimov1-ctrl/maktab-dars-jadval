@@ -56,6 +56,11 @@
           </div>
         </div>
 
+        <button id="aiUploadBtn" class="hidden px-3 py-2 text-sm rounded-lg bg-purple-600 text-white hover:bg-purple-700 active:scale-95 font-semibold transition-all shadow-md items-center gap-1.5">
+          🤖 AI orqali yuklash (PDF/Rasm)
+        </button>
+        <input type="file" id="aiFileInput" accept="image/*,application/pdf" class="hidden">
+
         <button id="logoutBtn" class="hidden px-3 py-2 text-sm rounded-lg bg-red-600 text-white hover:bg-red-700 active:scale-95 font-semibold transition-all shadow-md">
           🚪 Chiqish
         </button>
@@ -137,6 +142,8 @@
     const logoutBtn = document.getElementById('logoutBtn');
     const roleBadge = document.getElementById('roleBadge');
     const secretHeader = document.getElementById('secretHeader');
+    const aiUploadBtn = document.getElementById('aiUploadBtn');
+    const aiFileInput = document.getElementById('aiFileInput');
 
     const loginModal = document.getElementById('loginModal');
     const loginForm = document.getElementById('loginForm');
@@ -182,10 +189,14 @@
         roleBadge.className = "text-xs px-2.5 py-1 rounded-full bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 font-semibold";
         roleBadge.textContent = "⚡ Admin rejimi (Tahrirlash faol)";
         logoutBtn.classList.remove('hidden');
+        aiUploadBtn.classList.remove('hidden');
+        aiUploadBtn.classList.add('flex');
       } else {
         roleBadge.className = "text-xs px-2.5 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 font-semibold";
         roleBadge.textContent = "👁️ O'quvchi (Ko'rish rejimi)";
         logoutBtn.classList.add('hidden');
+        aiUploadBtn.classList.add('hidden');
+        aiUploadBtn.classList.remove('flex');
       }
 
       days.forEach((day, index) => {
@@ -246,6 +257,45 @@
         timetableGrid.appendChild(dayCard);
       });
     }
+
+    aiUploadBtn.addEventListener('click', () => aiFileInput.click());
+
+    aiFileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file || !adminToken) return;
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('className', selectedClass);
+
+      const originalBtnText = aiUploadBtn.innerHTML;
+      aiUploadBtn.innerHTML = "⏳ AI o'qimoqda...";
+      aiUploadBtn.disabled = true;
+
+      try {
+        const res = await fetch('/api/timetable/upload', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${adminToken}`
+          },
+          body: formData
+        });
+
+        const result = await res.json();
+        if (result.success) {
+          alert(result.message);
+          fetchTimetable();
+        } else {
+          alert(result.error || "Xatolik yuz berdi!");
+        }
+      } catch (err) {
+        alert("Server bilan bog'lanishda xatolik!");
+      } finally {
+        aiUploadBtn.innerHTML = originalBtnText;
+        aiUploadBtn.disabled = false;
+        aiFileInput.value = '';
+      }
+    });
 
     function openLoginModal() {
       if (adminToken) return;
