@@ -8,6 +8,7 @@ import { existsSync, writeFileSync, mkdirSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { GoogleGenAI } from '@google/genai';
+import { initBot } from './bot.js';
 
 dotenv.config();
 
@@ -306,4 +307,5 @@ app.get('*', (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Server ${PORT}-portda muvaffaqiyatli ishga tushdi.`);
+  initBot();
 });
