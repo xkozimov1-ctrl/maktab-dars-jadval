@@ -32,18 +32,17 @@ export async function readData() {
 
 // Ma'lumotni Supabase'ga yozish
 export async function writeData(data) {
-  try {
-    const { error } = await supabase
-      .from('app_data')
-      .update({
-        timetable: data.timetable || {},
-        lesson_counts: data.lessonCounts || {},
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', 1);
+  const { error } = await supabase
+    .from('app_data')
+    .upsert({
+      id: 1,
+      timetable: data.timetable || {},
+      lesson_counts: data.lessonCounts || {},
+      updated_at: new Date().toISOString()
+    });
 
-    if (error) throw error;
-  } catch (err) {
-    console.error("Supabase'ga yozishda xatolik:", err.message || err);
+  if (error) {
+    console.error("Supabase'ga yozishda xatolik:", error.message || error);
+    throw error;
   }
 }
