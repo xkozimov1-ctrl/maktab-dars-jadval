@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
 import multer from 'multer';
 import fs from 'fs/promises';
+import { existsSync, writeFileSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { GoogleGenAI } from '@google/genai';
@@ -17,6 +18,15 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'maktab_dars_jadvali_secret_key_2026';
 const DATA_FILE = path.join(__dirname, 'data.json');
+
+// data.json fayli mavjud bo'lmasa, uni yaratish
+if (!existsSync(DATA_FILE)) {
+  try {
+    writeFileSync(DATA_FILE, JSON.stringify({ timetable: {}, lessonCounts: {} }, null, 2), 'utf8');
+  } catch (e) {
+    console.error("data.json yaratishda xatolik:", e);
+  }
+}
 
 // Middleware
 app.use(cors());
@@ -41,23 +51,31 @@ async function readData() {
 }
 
 async function writeData(data) {
-  await fs.writeFile(DATA_FILE, JSON.stringify(data, null, 2), 'utf8');
+  try {
+    await fs.writeFile(DATA_FILE, JSON.stringify(data, null, 2), 'utf8');
+  } catch (err) {
+    console.error("Faylga yozishda xatolik:", err);
+  }
 }
 
 // JWT Tokenni tekshirish Middleware
 function authenticateToken(req, res, next) {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+  try {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
 
-  if (!token) {
-    return res.status(401).json({ error: "Avtorizatsiyadan o'tilmagan!" });
+    if (!token) {
+      return res.status(401).json({ error: "Avtorizatsiyadan o'tilmagan!" });
+    }
+
+    jwt.verify(token, JWT_SECRET, (err, user) => {
+      if (err) return res.status(403).json({ error: "Token yaroqsiz yoki muddati o'tgan!" });
+      req.user = user;
+      next();
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Autentifikatsiya xatosi!" });
   }
-
-  jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) return res.status(403).json({ error: "Token yaroqsiz yoki muddati o'tgan!" });
-    req.user = user;
-    next();
-  });
 }
 
 // ================= API ENDPOINTS =================
@@ -78,7 +96,7 @@ app.post('/api/admin/login', (req, res) => {
 
     res.status(401).json({ error: "Parol noto'g'ri!" });
   } catch (err) {
-    res.status(500).json({ error: "Login jarayonida xatolik yuz berdi." });
+    res.status(500).json({ error: "Login jarayonida server xatosi." });
   }
 });
 
@@ -165,7 +183,7 @@ Ahamiyat bering:
     });
 
     let text = response.text.trim();
-    text = text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
+    text = text.replace(/^```json/i, '').replace(/^```/i, '').replace(/```$/i, '').trim();
 
     const parsedTimetable = JSON.parse(text);
 
