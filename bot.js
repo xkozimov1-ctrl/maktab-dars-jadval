@@ -93,7 +93,7 @@ export function initBot() {
 
   if (!token) {
     console.log("⚠️ BOT_TOKEN topilmadi. Telegram bot o'chirilgan.");
-    return;
+    return null;
   }
 
   try {
@@ -110,7 +110,6 @@ export function initBot() {
       logError('Polling', error);
     });
 
-    // Webhook xatoliklarini boshqarish
     bot.on('webhook_error', (error) => {
       logError('Webhook', error);
     });
@@ -179,9 +178,7 @@ export function initBot() {
           `📌 *Funksiyalar:*\n` +
           `✅ Barcha sinflar jadvali\n` +
           `✅ Tezkor qidiruv\n` +
-          `✅ Qulay interfeys\n\n` +
-          `🔗 *Manba kod:* GitHub\n` +
-          `🌐 *Veb-sayt:* [Maktab Dars Jadvali](https://maktab-dars-jadval.onrender.com/)`,
+          `✅ Qulay interfeys`,
           {
             parse_mode: 'Markdown',
             disable_web_page_preview: true
@@ -198,8 +195,8 @@ export function initBot() {
         const chatId = msg.chat.id;
         const text = msg.text;
 
-        // Faqat matnli xabarlarni qayta ishlaymiz
         if (!text) return;
+        if (text.startsWith('/')) return; // Komandalarni o'tkazib yuboramiz
 
         // "📚 Dars jadvali" tugmasi bosilganda
         if (text === '📚 Dars jadvali') {
@@ -283,13 +280,12 @@ export function initBot() {
       }
     });
 
-    // ============ Callback query (tugma bosilganda) ============
+    // ============ Callback query ============
     bot.on('callback_query', async (query) => {
       try {
         const chatId = query.message.chat.id;
         const data = query.data;
 
-        // Sinf tanlanganda
         if (data.startsWith('class_')) {
           const selectedClass = data.replace('class_', '');
           const serverData = await readData();
@@ -327,7 +323,6 @@ export function initBot() {
           return;
         }
 
-        // Boshqa sinfni tanlash
         if (data === 'select_other') {
           await bot.editMessageText(
             "📚 *Sinfni tanlang:*\n\nQuyidagi sinflardan birini tanlang:",
@@ -344,7 +339,6 @@ export function initBot() {
           return;
         }
 
-        // Asosiy menyu
         if (data === 'main_menu') {
           await bot.deleteMessage(chatId, query.message.message_id);
           
@@ -364,8 +358,6 @@ export function initBot() {
 
       } catch (error) {
         logError('Callback query', error);
-        
-        // Xatolik yuz berganda foydalanuvchiga xabar berish
         try {
           bot.answerCallbackQuery(query.id, {
             text: "❌ Xatolik yuz berdi! Iltimos, qaytadan urinib ko'ring.",
@@ -378,12 +370,9 @@ export function initBot() {
     });
 
     console.log("🤖 Telegram Bot muvaffaqiyatli ishga tushdi!");
-    console.log(`📱 Bot username: ${bot.getMe ? 'Loading...' : 'Unknown'}`);
     
-    // Bot ma'lumotlarini olish
     bot.getMe().then((botInfo) => {
       console.log(`✅ Bot: @${botInfo.username}`);
-      console.log(`📊 Bot ID: ${botInfo.id}`);
     }).catch((error) => {
       logError('getMe', error);
     });
@@ -396,7 +385,6 @@ export function initBot() {
   }
 }
 
-// Qo'shimcha funksiyalar
 export function getBotInfo() {
   const token = process.env.BOT_TOKEN;
   if (!token) {
