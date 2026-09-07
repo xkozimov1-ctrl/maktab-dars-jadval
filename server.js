@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
 import multer from 'multer';
 import fs from 'fs/promises';
-import { existsSync, writeFileSync } from 'fs';
+import { existsSync, writeFileSync, mkdirSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { GoogleGenAI } from '@google/genai';
@@ -17,14 +17,22 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'maktab_dars_jadvali_secret_key_2026';
-const DATA_FILE = path.join(__dirname, 'data.json');
 
-// data.json fayli mavjud bo'lmasa, uni yaratish
+// XATOLIK EDI: bu yerda "data.json" (root papkada) ishlatilgan, lekin bot.js
+// "data/timetable.json" faylini o'qiydi. Natijada bot va sayt HECH QACHON
+// bir xil ma'lumotni ko'rmasdi. Ikkalasini bitta faylga moslashtirdik.
+const DATA_DIR = path.join(__dirname, 'data');
+const DATA_FILE = path.join(DATA_DIR, 'timetable.json');
+
+if (!existsSync(DATA_DIR)) {
+  mkdirSync(DATA_DIR, { recursive: true });
+}
+
 if (!existsSync(DATA_FILE)) {
   try {
     writeFileSync(DATA_FILE, JSON.stringify({ timetable: {}, lessonCounts: {} }, null, 2), 'utf8');
   } catch (e) {
-    console.error("data.json yaratishda xatolik:", e);
+    console.error("timetable.json yaratishda xatolik:", e);
   }
 }
 
@@ -100,7 +108,20 @@ app.post('/api/admin/login', (req, res) => {
   }
 });
 
-// 2. Dars jadvalini olish
+// 2a. Barcha sinflar uchun to'liq ma'lumotni olish
+// XATOLIK EDI: index.html "fetch('/api/timetable')" (sinf nomisiz) so'rov yuborardi,
+// lekin bunday endpoint mavjud emas edi — faqat "/api/timetable/:className" bor edi.
+// Shu sabab sahifa hech qachon ma'lumot ololmasdi.
+app.get('/api/timetable', async (req, res) => {
+  try {
+    const data = await readData();
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: "Ma'lumotlarni yuklashda xatolik!" });
+  }
+});
+
+// 2b. Bitta sinf uchun jadvalni olish
 app.get('/api/timetable/:className', async (req, res) => {
   try {
     const data = await readData();
@@ -135,6 +156,75 @@ app.post('/api/timetable/save', authenticateToken, async (req, res) => {
     res.json({ success: true, message: "Dars jadvali muvaffaqiyatli saqlandi!" });
   } catch (err) {
     res.status(500).json({ error: "Saqlashda xatolik yuz berdi!" });
+  }
+});
+
+// 3b. Bitta kunning soatlar sonini o'zgartirish (+1 soat / -1 soat tugmalari)
+// XATOLIK EDI: index.html "/api/timetable/count" ga POST yuborardi, bunday endpoint umuman yo'q edi.
+app.post('/api/timetable/count', authenticateToken, async (req, res) => {
+  try {
+    const { className, day, count } = req.body || {};
+    if (!className || !day || typeof count !== 'number') {
+      return res.status(400).json({ error: "Noto'g'ri so'rov ma'lumotlari!" });
+    }
+
+    const data = await readData();
+    if (!data.lessonCounts) data.lessonCounts = {};
+    if (!data.lessonCounts[className]) data.lessonCounts[className] = {};
+    data.lessonCounts[className][day] = Math.max(1, count);
+
+    await writeData(data);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: "Soatlar sonini yangilashda xatolik!" });
+  }
+});
+
+// 3c. Bitta darsni qo'shish/tahrirlash (jadval katagi bosilganda ochiladigan modal)
+// XATOLIK EDI: index.html "/api/timetable/lesson" ga POST yuborardi, bunday endpoint umuman yo'q edi.
+app.post('/api/timetable/lesson', authenticateToken, async (req, res) => {
+  try {
+    const { className, day, lessonIndex, lessonData } = req.body || {};
+    if (!className || !day || lessonIndex === undefined || lessonIndex === null) {
+      return res.status(400).json({ error: "Noto'g'ri so'rov ma'lumotlari!" });
+    }
+
+    const data = await readData();
+    if (!data.timetable) data.timetable = {};
+    if (!data.timetable[className]) data.timetable[className] = {};
+    if (!Array.isArray(data.timetable[className][day])) data.timetable[className][day] = [];
+
+    // lessonIndex'gacha bo'lgan bo'sh o'rinlarni to'ldirib qo'yamiz
+    while (data.timetable[className][day].length <= lessonIndex) {
+      data.timetable[className][day].push(null);
+    }
+    data.timetable[className][day][lessonIndex] = lessonData;
+
+    await writeData(data);
+    res.json({ success: true, message: "Dars saqlandi!" });
+  } catch (err) {
+    res.status(500).json({ error: "Darsni saqlashda xatolik!" });
+  }
+});
+
+// 3d. Bitta darsni o'chirish
+// XATOLIK EDI: index.html "DELETE /api/timetable/lesson" yuborardi, bunday endpoint umuman yo'q edi.
+app.delete('/api/timetable/lesson', authenticateToken, async (req, res) => {
+  try {
+    const { className, day, lessonIndex } = req.body || {};
+    if (!className || !day || lessonIndex === undefined || lessonIndex === null) {
+      return res.status(400).json({ error: "Noto'g'ri so'rov ma'lumotlari!" });
+    }
+
+    const data = await readData();
+    if (data.timetable?.[className]?.[day]?.[lessonIndex] !== undefined) {
+      data.timetable[className][day][lessonIndex] = null;
+      await writeData(data);
+    }
+
+    res.json({ success: true, message: "Dars o'chirildi!" });
+  } catch (err) {
+    res.status(500).json({ error: "Darsni o'chirishda xatolik!" });
   }
 });
 
