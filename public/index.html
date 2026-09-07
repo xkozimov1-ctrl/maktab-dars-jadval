@@ -22,9 +22,9 @@
     .animate-slide-down { animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
   </style>
 </head>
-<body class="bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-white min-h-screen p-4 md:p-6 transition-colors duration-300">
+<body class="bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-white min-h-screen p-4 md:p-6 transition-colors duration-300 flex flex-col">
 
-  <div class="max-w-7xl mx-auto">
+  <div class="max-w-7xl mx-auto flex-1 w-full">
     <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-md transition-all">
       <div class="flex items-center gap-3 cursor-pointer select-none group" id="secretHeader" title="Admin uchun 3 marta bosing">
         <h1 class="text-2xl font-bold group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">📚 Maktab Dars Jadvali</h1>
@@ -70,6 +70,29 @@
     <div id="timetableGrid" class="grid grid-cols-1 md:grid-cols-5 gap-4"></div>
   </div>
 
+  <!-- ===== FOOTER ===== -->
+  <footer class="max-w-7xl mx-auto w-full mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+    <div class="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+      <div class="flex items-center gap-2">
+        <span>📚 Maktab Dars Jadvali</span>
+        <span class="hidden sm:inline">•</span>
+        <span>v1.0</span>
+      </div>
+      
+      <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-left">
+        <span>👨‍💻 Yaratuvchi: <strong class="text-gray-700 dark:text-gray-300">Kozimov Xushnudbek</strong></span>
+        <span class="hidden sm:inline">•</span>
+        <a href="https://t.me/maktab1son_bot" 
+           target="_blank" 
+           class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors duration-200 font-medium">
+          <span>🤖</span> Telegram Bot
+        </a>
+      </div>
+    </div>
+  </footer>
+  <!-- ===== FOOTER END ===== -->
+
+  <!-- Modallar (login va lesson) -->
   <div id="loginModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
     <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl max-w-sm w-full shadow-2xl animate-slide-down">
       <h3 class="text-xl font-bold mb-4">🔑 Admin sifatida kirish</h3>
@@ -487,28 +510,5 @@
 
     init();
   </script>
-  <footer class="bg-slate-900 text-slate-300 py-6 mt-12 border-t border-slate-800">
-  <div class="max-w-7xl mx-auto px-4 text-center sm:flex sm:justify-between sm:items-center">
-    <div class="mb-4 sm:mb-0">
-      <p class="text-sm">
-        Dasturchi: <span class="font-semibold text-white">Kozimov Xushnudbek</span>
-      </p>
-    </div>
-    
-    <div>
-      <a 
-        href="https://t.me/maktab1son_bot" 
-        target="_blank" 
-        rel="noopener noreferrer" 
-        class="inline-flex items-center gap-2 text-sm text-sky-400 hover:text-sky-300 font-medium transition-colors"
-      >
-        <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
-          <path d="M12 0C5.37 0 0 5.37 0 12s5.37 12 12 12 12-5.37 12-12S18.63 0 12 0zm5.56 8.16l-2.02 9.52c-.15.68-.56.84-1.13.52l-3.1-2.29-1.5 1.44c-.17.17-.31.31-.63.31l.22-3.17 5.77-5.21c.25-.22-.05-.34-.39-.12l-7.13 4.49-3.08-.96c-.67-.21-.68-.67.14-.99l12.04-4.64c.56-.2 1.05.14.83.92z"/>
-        </svg>
-        <span>@maktab1son_bot</span>
-      </a>
-    </div>
-  </div>
-</footer>
 </body>
 </html>

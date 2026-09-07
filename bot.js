@@ -7,8 +7,9 @@ const TelegramBot = require('node-telegram-bot-api');
 
 dotenv.config();
 
-function getClassButtons() {
-  const classes = [
+// Barcha sinflar ro'yxati
+function getClassList() {
+  return [
     '5A', '5B',
     '6A', '6B',
     '7A', '7B', '7D',
@@ -17,8 +18,13 @@ function getClassButtons() {
     '10A', '10B', '10D', '10A(U)', '10B(U)',
     '11A', '11B', '11D', '11A(U)'
   ];
+}
 
+// Sinf tugmalarini yaratish (3 ta ustun)
+function getClassButtons() {
+  const classes = getClassList();
   const keyboard = [];
+  
   for (let i = 0; i < classes.length; i += 3) {
     keyboard.push(
       classes.slice(i, i + 3).map(cls => ({
@@ -29,6 +35,57 @@ function getClassButtons() {
   }
 
   return keyboard;
+}
+
+// Asosiy menyu tugmalari
+function getMainMenuButtons() {
+  return {
+    reply_markup: {
+      keyboard: [
+        [{ text: "📚 Dars jadvali" }],
+        [{ text: "ℹ️ Bot haqida" }]
+      ],
+      resize_keyboard: true,
+      one_time_keyboard: false
+    }
+  };
+}
+
+// Dars jadvalini formatlash
+function formatTimetable(selectedClass, timetable) {
+  const days = ['Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma'];
+  let message = `📚 *${selectedClass} sinf Dars Jadvali*\n\n`;
+
+  days.forEach(day => {
+    const lessons = timetable[day];
+    if (lessons && lessons.length > 0) {
+      message += `🗓 *${day}:*\n`;
+      let hasLesson = false;
+      
+      lessons.forEach((lesson, idx) => {
+        if (lesson && lesson.subject && lesson.subject.trim() !== '') {
+          hasLesson = true;
+          const room = lesson.room ? ` (${lesson.room}-xona)` : '';
+          const teacher = lesson.teacher ? ` - ${lesson.teacher}` : '';
+          message += `  ${idx + 1}. *${lesson.subject}*${room}${teacher}\n`;
+        }
+      });
+      
+      if (!hasLesson) {
+        message += `  _📭 Darslar yo'q_\n`;
+      }
+      message += `\n`;
+    } else {
+      message += `🗓 *${day}:*\n  _📭 Darslar yo'q_\n\n`;
+    }
+  });
+
+  return message;
+}
+
+// Xatoliklarni log qilish
+function logError(context, error) {
+  console.error(`❌ Bot xatosi (${context}):`, error.message || error);
 }
 
 export function initBot() {
@@ -48,126 +105,307 @@ export function initBot() {
       }
     });
 
+    // Polling xatoliklarini boshqarish
     bot.on('polling_error', (error) => {
-      console.error("⚠️ Telegram Bot Polling Xatosi:", error.code || error.message);
+      logError('Polling', error);
     });
 
+    // Webhook xatoliklarini boshqarish
+    bot.on('webhook_error', (error) => {
+      logError('Webhook', error);
+    });
+
+    // ============ /start komandasi ============
     bot.onText(/\/start/, (msg) => {
-      const chatId = msg.chat.id;
-      bot.sendMessage(chatId, "👋 **Maktab Dars Jadvali botiga xush kelibsiz!**\n\nQaysi sinf dars jadvali kerak? Quyidagilardan tanlang:", {
-        parse_mode: 'Markdown',
-        reply_markup: {
-          inline_keyboard: getClassButtons()
-        }
-      });
+      try {
+        const chatId = msg.chat.id;
+        const firstName = msg.from?.first_name || 'Foydalanuvchi';
+        
+        bot.sendMessage(
+          chatId,
+          `👋 *Assalomu alaykum, ${firstName}!*\n\n` +
+          `📚 *Maktab Dars Jadvali botiga xush kelibsiz!*\n\n` +
+          `🤖 Bu bot orqali maktab dars jadvallarini tez va qulay tarzda ko'rishingiz mumkin.\n\n` +
+          `👨‍💻 *Yaratuvchi:* Kozimov Xushnudbek\n` +
+          `🔗 *Telegram:* @thekzmv\n\n` +
+          `📌 Quyidagi tugmalardan birini tanlang:`,
+          {
+            parse_mode: 'Markdown',
+            ...getMainMenuButtons()
+          }
+        );
+      } catch (error) {
+        logError('/start', error);
+      }
     });
 
-    bot.on('callback_query', async (query) => {
-      const chatId = query.message.chat.id;
-      const data = query.data;
+    // ============ /help komandasi ============
+    bot.onText(/\/help/, (msg) => {
+      try {
+        const chatId = msg.chat.id;
+        bot.sendMessage(
+          chatId,
+          `🆘 *Yordam menyusi*\n\n` +
+          `📌 *Qanday foydalaniladi?*\n` +
+          `1️⃣ "📚 Dars jadvali" tugmasini bosing\n` +
+          `2️⃣ Kerakli sinfni tanlang\n` +
+          `3️⃣ Dars jadvalini ko'ring\n\n` +
+          `📌 *Buyruqlar:*\n` +
+          `/start - Botni qayta ishga tushirish\n` +
+          `/help - Yordam olish\n` +
+          `/about - Bot haqida ma'lumot\n\n` +
+          `👨‍💻 *Muallif:* Kozimov Xushnudbek\n` +
+          `📱 *Telegram:* @thekzmv`,
+          { parse_mode: 'Markdown' }
+        );
+      } catch (error) {
+        logError('/help', error);
+      }
+    });
 
-      if (data.startsWith('class_')) {
-        const selectedClass = data.replace('class_', '');
-        const serverData = await readData();
-        const timetable = serverData.timetable?.[selectedClass];
+    // ============ /about komandasi ============
+    bot.onText(/\/about/, (msg) => {
+      try {
+        const chatId = msg.chat.id;
+        bot.sendMessage(
+          chatId,
+          `ℹ️ *Bot haqida ma'lumot*\n\n` +
+          `📚 *Nomi:* Maktab Dars Jadvali Bot\n` +
+          `🤖 *Versiya:* 1.0.0\n` +
+          `📅 *Yaratilgan sana:* 2025-yil\n\n` +
+          `👨‍💻 *Yaratuvchi:* Kozimov Xushnudbek\n` +
+          `📱 *Telegram:* @thekzmv\n` +
+          `💻 *Tillar:* JavaScript, Node.js\n\n` +
+          `📌 *Funksiyalar:*\n` +
+          `✅ Barcha sinflar jadvali\n` +
+          `✅ Tezkor qidiruv\n` +
+          `✅ Qulay interfeys\n\n` +
+          `🔗 *Manba kod:* GitHub\n` +
+          `🌐 *Veb-sayt:* [Maktab Dars Jadvali](https://maktab-dars-jadval.onrender.com/)`,
+          {
+            parse_mode: 'Markdown',
+            disable_web_page_preview: true
+          }
+        );
+      } catch (error) {
+        logError('/about', error);
+      }
+    });
 
-        if (!timetable || Object.keys(timetable).length === 0) {
-          bot.answerCallbackQuery(query.id, { text: "Ushbu sinf uchun dars jadvali hali kiritilmagan.", show_alert: true });
+    // ============ Matnli xabarlarni qayta ishlash ============
+    bot.on('message', async (msg) => {
+      try {
+        const chatId = msg.chat.id;
+        const text = msg.text;
+
+        // Faqat matnli xabarlarni qayta ishlaymiz
+        if (!text) return;
+
+        // "📚 Dars jadvali" tugmasi bosilganda
+        if (text === '📚 Dars jadvali') {
+          bot.sendMessage(
+            chatId,
+            "📚 *Sinfni tanlang:*\n\nQuyidagi sinflardan birini tanlang:",
+            {
+              parse_mode: 'Markdown',
+              reply_markup: {
+                inline_keyboard: getClassButtons()
+              }
+            }
+          );
           return;
         }
 
-        const days = ['Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma'];
-        let message = `📚 **${selectedClass} sinf Dars Jadvali**\n\n`;
-
-        days.forEach(day => {
-          const lessons = timetable[day];
-          if (lessons && lessons.length > 0) {
-            message += `🗓 **${day}:**\n`;
-            let hasLesson = false;
-            lessons.forEach((lesson, idx) => {
-              if (lesson && lesson.subject) {
-                hasLesson = true;
-                const room = lesson.room ? `(${lesson.room}-xona)` : '';
-                const teacher = lesson.teacher ? `- ${lesson.teacher}` : '';
-                message += `  ${idx + 1}. **${lesson.subject}** ${room} ${teacher}\n`;
+        // "ℹ️ Bot haqida" tugmasi bosilganda
+        if (text === 'ℹ️ Bot haqida') {
+          bot.sendMessage(
+            chatId,
+            `ℹ️ *Bot haqida ma'lumot*\n\n` +
+            `📚 *Nomi:* Maktab Dars Jadvali Bot\n` +
+            `🤖 *Versiya:* 1.0.0\n\n` +
+            `👨‍💻 *Yaratuvchi:* Kozimov Xushnudbek\n` +
+            `📱 *Telegram:* @thekzmv\n\n` +
+            `📌 *Funksiyalar:*\n` +
+            `✅ Barcha sinflar jadvali\n` +
+            `✅ Tezkor qidiruv\n` +
+            `✅ Qulay interfeys`,
+            {
+              parse_mode: 'Markdown',
+              reply_markup: {
+                keyboard: [
+                  [{ text: "📚 Dars jadvali" }],
+                  [{ text: "ℹ️ Bot haqida" }]
+                ],
+                resize_keyboard: true
               }
-            });
-            if (!hasLesson) message += `  _Darslar yo'q_\n`;
-            message += `\n`;
-          }
-        });
+            }
+          );
+          return;
+        }
 
-        bot.sendMessage(chatId, message, {
-          parse_mode: 'Markdown',
-          reply_markup: {
-            inline_keyboard: [
-              [{ text: "🔄 Boshqa sinfni tanlash", callback_data: "select_other" }]
-            ]
+        // Sinf nomi yozilsa (masalan: "5A" deb yozsa)
+        const classes = getClassList();
+        if (classes.includes(text.trim())) {
+          const selectedClass = text.trim();
+          const serverData = await readData();
+          const timetable = serverData.timetable?.[selectedClass];
+
+          if (!timetable || Object.keys(timetable).length === 0) {
+            bot.sendMessage(
+              chatId,
+              `❌ *${selectedClass} sinf* uchun dars jadvali hali kiritilmagan.\n\n` +
+              `📌 Iltimos, boshqa sinfni tanlang yoki administrator bilan bog'laning.`,
+              { parse_mode: 'Markdown' }
+            );
+            return;
           }
-        });
-      } else if (data === 'select_other') {
-        bot.sendMessage(chatId, "Sinfni tanlang:", {
-          reply_markup: {
-            inline_keyboard: getClassButtons()
-          }
-        });
+
+          const message = formatTimetable(selectedClass, timetable);
+          
+          bot.sendMessage(
+            chatId,
+            message,
+            {
+              parse_mode: 'Markdown',
+              reply_markup: {
+                inline_keyboard: [
+                  [{ text: "🔄 Boshqa sinfni tanlash", callback_data: "select_other" }],
+                  [{ text: "📋 Asosiy menyu", callback_data: "main_menu" }]
+                ]
+              }
+            }
+          );
+          return;
+        }
+
+      } catch (error) {
+        logError('Message handler', error);
       }
-
-      bot.answerCallbackQuery(query.id);
     });
 
-    console.log("🤖 Telegram Bot ishga tushdi...");
-  } catch (err) {
-    console.error("Botni ishga tushirishda xato:", err);
+    // ============ Callback query (tugma bosilganda) ============
+    bot.on('callback_query', async (query) => {
+      try {
+        const chatId = query.message.chat.id;
+        const data = query.data;
+
+        // Sinf tanlanganda
+        if (data.startsWith('class_')) {
+          const selectedClass = data.replace('class_', '');
+          const serverData = await readData();
+          const timetable = serverData.timetable?.[selectedClass];
+
+          if (!timetable || Object.keys(timetable).length === 0) {
+            bot.answerCallbackQuery(query.id, {
+              text: `❌ ${selectedClass} sinf uchun dars jadvali mavjud emas!`,
+              show_alert: true
+            });
+            return;
+          }
+
+          const message = formatTimetable(selectedClass, timetable);
+          
+          await bot.editMessageText(
+            message,
+            {
+              chat_id: chatId,
+              message_id: query.message.message_id,
+              parse_mode: 'Markdown',
+              reply_markup: {
+                inline_keyboard: [
+                  [{ text: "🔄 Boshqa sinfni tanlash", callback_data: "select_other" }],
+                  [{ text: "📋 Asosiy menyu", callback_data: "main_menu" }]
+                ]
+              }
+            }
+          );
+
+          bot.answerCallbackQuery(query.id, {
+            text: `✅ ${selectedClass} sinf jadvali yuklandi`,
+            show_alert: false
+          });
+          return;
+        }
+
+        // Boshqa sinfni tanlash
+        if (data === 'select_other') {
+          await bot.editMessageText(
+            "📚 *Sinfni tanlang:*\n\nQuyidagi sinflardan birini tanlang:",
+            {
+              chat_id: chatId,
+              message_id: query.message.message_id,
+              parse_mode: 'Markdown',
+              reply_markup: {
+                inline_keyboard: getClassButtons()
+              }
+            }
+          );
+          bot.answerCallbackQuery(query.id);
+          return;
+        }
+
+        // Asosiy menyu
+        if (data === 'main_menu') {
+          await bot.deleteMessage(chatId, query.message.message_id);
+          
+          bot.sendMessage(
+            chatId,
+            `📚 *Asosiy menyu*\n\nQuyidagi tugmalardan birini tanlang:`,
+            {
+              parse_mode: 'Markdown',
+              ...getMainMenuButtons()
+            }
+          );
+          bot.answerCallbackQuery(query.id);
+          return;
+        }
+
+        bot.answerCallbackQuery(query.id);
+
+      } catch (error) {
+        logError('Callback query', error);
+        
+        // Xatolik yuz berganda foydalanuvchiga xabar berish
+        try {
+          bot.answerCallbackQuery(query.id, {
+            text: "❌ Xatolik yuz berdi! Iltimos, qaytadan urinib ko'ring.",
+            show_alert: true
+          });
+        } catch (e) {
+          // Ignore
+        }
+      }
+    });
+
+    console.log("🤖 Telegram Bot muvaffaqiyatli ishga tushdi!");
+    console.log(`📱 Bot username: ${bot.getMe ? 'Loading...' : 'Unknown'}`);
+    
+    // Bot ma'lumotlarini olish
+    bot.getMe().then((botInfo) => {
+      console.log(`✅ Bot: @${botInfo.username}`);
+      console.log(`📊 Bot ID: ${botInfo.id}`);
+    }).catch((error) => {
+      logError('getMe', error);
+    });
+
+    return bot;
+
+  } catch (error) {
+    console.error("❌ Botni ishga tushirishda xato:", error);
+    return null;
   }
 }
-const TelegramBot = require('node-telegram-bot-api');
 
-// Bot tokeningizni kiriting
-const token = 'YOUR_TELEGRAM_BOT_TOKEN';
-const bot = new TelegramBot(token, { polling: true });
-
-// Footer textini qaytaruvchi funksiya
-const getFooterText = () => {
-  return "\n\n───────────────────\n" +
-         "👨‍💻 *Dasturchi:* Kozimov Xushnudbek\n" +
-         "🤖 *Rasmiy bot:* @maktab1son_bot";
-};
-
-// /start buyrug'i uchun ishlovchi
-bot.onText(/\/start/, (msg) => {
-  const chatId = msg.chat.id;
+// Qo'shimcha funksiyalar
+export function getBotInfo() {
+  const token = process.env.BOT_TOKEN;
+  if (!token) {
+    return { status: 'disabled', message: 'BOT_TOKEN topilmadi' };
+  }
   
-  const text = 
-    "👋 *Maktab dars jadvali botiga xush kelibsiz!*\n\n" +
-    "Ushbu bot orqali siz sinflarning kunlik dars jadvalini osongina topishingiz mumkin." +
-    getFooterText();
-
-  const options = {
-    parse_mode: 'Markdown',
-    reply_markup: {
-      inline_keyboard: [
-        [
-          { text: '📅 Dars jadvalini ko\'rish', callback_data: 'view_schedule' }
-        ],
-        [
-          { text: '👨‍💻 Dasturchi bilan bog\'lanish', url: 'https://t.me/maktab1son_bot' }
-        ]
-      ]
-    }
+  return {
+    status: 'active',
+    token: token.substring(0, 10) + '...',
+    botUrl: 'https://t.me/maktab1son_bot'
   };
-
-  bot.sendMessage(chatId, text, options);
-});
-
-// /about yoki /help buyrug'i uchun
-bot.onText(/\/about/, (msg) => {
-  const chatId = msg.chat.id;
-
-  const text = 
-    "ℹ️ *Tizim haqida*\n\n" +
-    "Maktab o'quvchilari va o'qituvchilari uchun mo'ljallangan dars jadvali platformasi." +
-    getFooterText();
-
-  bot.sendMessage(chatId, text, { parse_mode: 'Markdown' });
-});
+}
