@@ -121,3 +121,53 @@ export function initBot() {
     console.error("Botni ishga tushirishda xato:", err);
   }
 }
+const TelegramBot = require('node-telegram-bot-api');
+
+// Bot tokeningizni kiriting
+const token = 'YOUR_TELEGRAM_BOT_TOKEN';
+const bot = new TelegramBot(token, { polling: true });
+
+// Footer textini qaytaruvchi funksiya
+const getFooterText = () => {
+  return "\n\n───────────────────\n" +
+         "👨‍💻 *Dasturchi:* Kozimov Xushnudbek\n" +
+         "🤖 *Rasmiy bot:* @maktab1son_bot";
+};
+
+// /start buyrug'i uchun ishlovchi
+bot.onText(/\/start/, (msg) => {
+  const chatId = msg.chat.id;
+  
+  const text = 
+    "👋 *Maktab dars jadvali botiga xush kelibsiz!*\n\n" +
+    "Ushbu bot orqali siz sinflarning kunlik dars jadvalini osongina topishingiz mumkin." +
+    getFooterText();
+
+  const options = {
+    parse_mode: 'Markdown',
+    reply_markup: {
+      inline_keyboard: [
+        [
+          { text: '📅 Dars jadvalini ko\'rish', callback_data: 'view_schedule' }
+        ],
+        [
+          { text: '👨‍💻 Dasturchi bilan bog\'lanish', url: 'https://t.me/maktab1son_bot' }
+        ]
+      ]
+    }
+  };
+
+  bot.sendMessage(chatId, text, options);
+});
+
+// /about yoki /help buyrug'i uchun
+bot.onText(/\/about/, (msg) => {
+  const chatId = msg.chat.id;
+
+  const text = 
+    "ℹ️ *Tizim haqida*\n\n" +
+    "Maktab o'quvchilari va o'qituvchilari uchun mo'ljallangan dars jadvali platformasi." +
+    getFooterText();
+
+  bot.sendMessage(chatId, text, { parse_mode: 'Markdown' });
+});
