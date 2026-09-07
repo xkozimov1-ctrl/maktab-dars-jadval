@@ -2,7 +2,7 @@
 <html lang="uz">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
   <title>Maktab Dars Jadvali</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -20,35 +20,147 @@
     }
     .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
     .animate-slide-down { animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    
+    /* Telefon uchun maxsus sozlamalar */
+    @media (max-width: 640px) {
+      .lesson-card {
+        min-height: 60px !important;
+        padding: 8px 10px !important;
+      }
+      .lesson-card .subject-text {
+        font-size: 13px !important;
+      }
+      .lesson-card .teacher-text {
+        font-size: 11px !important;
+      }
+      .day-card {
+        padding: 12px !important;
+      }
+      .day-title {
+        font-size: 16px !important;
+        margin-bottom: 8px !important;
+      }
+      .hour-badge {
+        font-size: 10px !important;
+      }
+      .room-badge {
+        font-size: 10px !important;
+        padding: 1px 6px !important;
+      }
+      .control-btn {
+        font-size: 11px !important;
+        padding: 4px 8px !important;
+      }
+      .header-title {
+        font-size: 18px !important;
+      }
+      .header-badge {
+        font-size: 10px !important;
+        padding: 2px 8px !important;
+      }
+      .header-controls {
+        gap: 6px !important;
+        flex-wrap: wrap !important;
+      }
+      .header-controls select {
+        font-size: 13px !important;
+        padding: 6px 8px !important;
+      }
+      .header-controls button {
+        font-size: 12px !important;
+        padding: 6px 10px !important;
+      }
+      .modal-content {
+        margin: 10px !important;
+        padding: 16px !important;
+        max-width: 100% !important;
+      }
+      .modal-content h3 {
+        font-size: 18px !important;
+      }
+      .modal-content input {
+        font-size: 14px !important;
+        padding: 10px !important;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .lesson-card {
+        min-height: 50px !important;
+        padding: 6px 8px !important;
+      }
+      .lesson-card .subject-text {
+        font-size: 12px !important;
+      }
+      .lesson-card .teacher-text {
+        font-size: 10px !important;
+      }
+      .day-card {
+        padding: 10px !important;
+      }
+      .day-title {
+        font-size: 14px !important;
+      }
+    }
+
+    /* Scrollni silliq qilish */
+    * {
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    /* Telefon ekranida 2 ustunli grid */
+    @media (max-width: 768px) {
+      .timetable-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px !important;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .timetable-grid {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 6px !important;
+      }
+    }
+    
+    /* Kichik telefonlarda 2 ustun */
+    @media (max-width: 380px) {
+      .timetable-grid {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 4px !important;
+      }
+    }
   </style>
 </head>
-<body class="bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-white min-h-screen p-4 md:p-6 transition-colors duration-300">
+<body class="bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-white min-h-screen p-2 md:p-4 lg:p-6 transition-colors duration-300">
 
   <div class="max-w-7xl mx-auto">
-    <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-md transition-all">
-      <div class="flex items-center gap-3 cursor-pointer select-none group" id="secretHeader" title="Admin uchun 3 marta bosing">
-        <h1 class="text-2xl font-bold group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">📚 Maktab Dars Jadvali</h1>
-        <span id="roleBadge" class="text-xs px-2.5 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 font-semibold transition-all">
-          👁️ O'quvchi (Ko'rish rejimi)
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 bg-white dark:bg-gray-800 p-3 md:p-4 rounded-xl shadow-md transition-all">
+      <div class="flex items-center gap-2 cursor-pointer select-none group w-full sm:w-auto" id="secretHeader">
+        <h1 class="header-title text-xl md:text-2xl font-bold group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">📚 Maktab Dars Jadvali</h1>
+        <span id="roleBadge" class="header-badge text-[10px] md:text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 font-semibold transition-all whitespace-nowrap">
+          👁️ O'quvchi
         </span>
       </div>
       
-      <div class="flex items-center gap-3 flex-wrap">
-        <label for="classSelect" class="font-semibold text-sm">Sinf:</label>
-        <select id="classSelect" class="p-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 font-bold text-blue-600 dark:text-blue-400 cursor-pointer focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+      <div class="header-controls flex items-center gap-2 flex-wrap w-full sm:w-auto">
+        <label for="classSelect" class="font-semibold text-sm hidden sm:inline">Sinf:</label>
+        <select id="classSelect" class="flex-1 sm:flex-none p-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 font-bold text-blue-600 dark:text-blue-400 cursor-pointer focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm md:text-base">
         </select>
 
         <button id="themeToggleBtn" class="px-3 py-2 text-sm rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 active:scale-95 transition-all">
-          🌙 Qorong'u
+          🌙
         </button>
 
         <div class="relative inline-block text-left group">
-          <button id="downloadBtn" class="px-3 py-2 text-sm rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 active:scale-95 font-semibold transition-all shadow-md flex items-center gap-1.5">
-            📥 Yuklab olish
+          <button id="downloadBtn" class="px-3 py-2 text-sm rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 active:scale-95 font-semibold transition-all shadow-md flex items-center gap-1">
+            📥
+            <span class="hidden sm:inline">Yuklab olish</span>
           </button>
           <div class="hidden group-hover:block absolute right-0 mt-1 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-xl border dark:border-gray-700 z-50 p-1 animate-fade-in">
             <button onclick="downloadAsImage()" class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg flex items-center gap-2">
-              🖼️ Rasm ko'rinishida (PNG)
+              🖼️ Rasm (PNG)
             </button>
             <button onclick="downloadAsJSON()" class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg flex items-center gap-2">
               📄 Zaxira (JSON)
@@ -56,59 +168,64 @@
           </div>
         </div>
 
-        <button id="aiUploadBtn" class="hidden px-3 py-2 text-sm rounded-lg bg-purple-600 text-white hover:bg-purple-700 active:scale-95 font-semibold transition-all shadow-md items-center gap-1.5">
-          🤖 AI orqali yuklash (PDF/Rasm)
+        <button id="aiUploadBtn" class="hidden px-3 py-2 text-sm rounded-lg bg-purple-600 text-white hover:bg-purple-700 active:scale-95 font-semibold transition-all shadow-md items-center gap-1">
+          🤖
+          <span class="hidden sm:inline">AI yuklash</span>
         </button>
         <input type="file" id="aiFileInput" accept="image/*,application/pdf" class="hidden">
 
         <button id="logoutBtn" class="hidden px-3 py-2 text-sm rounded-lg bg-red-600 text-white hover:bg-red-700 active:scale-95 font-semibold transition-all shadow-md">
-          🚪 Chiqish
+          🚪
+          <span class="hidden sm:inline">Chiqish</span>
         </button>
       </div>
     </div>
 
-    <div id="timetableGrid" class="grid grid-cols-1 md:grid-cols-5 gap-4"></div>
+    <!-- Dars jadvali grid -->
+    <div id="timetableGrid" class="timetable-grid grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 md:gap-4"></div>
   </div>
 
+  <!-- Login Modal -->
   <div id="loginModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
-    <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl max-w-sm w-full shadow-2xl animate-slide-down">
-      <h3 class="text-xl font-bold mb-4">🔑 Admin sifatida kirish</h3>
+    <div class="bg-white dark:bg-gray-800 p-5 md:p-6 rounded-2xl max-w-sm w-full shadow-2xl animate-slide-down modal-content">
+      <h3 class="text-lg md:text-xl font-bold mb-4">🔑 Admin kirish</h3>
       <form id="loginForm" class="space-y-4">
         <div>
-          <label class="block text-sm mb-1 font-medium">Parolni kiriting:</label>
-          <input type="password" id="passwordInput" required class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Parol...">
+          <label class="block text-sm mb-1 font-medium">Parol:</label>
+          <input type="password" id="passwordInput" required class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none text-base" placeholder="Parolni kiriting...">
           <p id="loginError" class="text-xs text-red-500 mt-1.5 hidden animate-pulse">Parol noto'g'ri!</p>
         </div>
-        <div class="flex justify-end gap-2">
-          <button type="button" id="closeLoginBtn" class="px-4 py-2 border rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-95">Bekor qilish</button>
-          <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:scale-95 shadow-md">Kirish</button>
+        <div class="flex flex-col sm:flex-row justify-end gap-2">
+          <button type="button" id="closeLoginBtn" class="px-4 py-2 border rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-95 w-full sm:w-auto">Bekor qilish</button>
+          <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:scale-95 shadow-md w-full sm:w-auto">Kirish</button>
         </div>
       </form>
     </div>
   </div>
 
+  <!-- Dars tahrirlash Modal -->
   <div id="lessonModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
-    <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl max-w-md w-full shadow-2xl animate-slide-down">
-      <h3 id="modalTitle" class="text-xl font-bold mb-4">Darsni tahrirlash</h3>
+    <div class="bg-white dark:bg-gray-800 p-5 md:p-6 rounded-2xl max-w-md w-full shadow-2xl animate-slide-down modal-content">
+      <h3 id="modalTitle" class="text-lg md:text-xl font-bold mb-4">Darsni tahrirlash</h3>
       <form id="lessonForm" class="space-y-4">
         <div>
-          <label class="block text-sm mb-1 font-medium">Fan nomi</label>
-          <input type="text" id="subjectInput" required class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Masalan: Matematika">
+          <label class="block text-sm mb-1 font-medium">Fan nomi *</label>
+          <input type="text" id="subjectInput" required class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none text-base" placeholder="Masalan: Matematika">
         </div>
         <div>
-          <label class="block text-sm mb-1 font-medium">O'qituvchi ismi</label>
-          <input type="text" id="teacherInput" class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Masalan: A. Karimov">
+          <label class="block text-sm mb-1 font-medium">O'qituvchi</label>
+          <input type="text" id="teacherInput" class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none text-base" placeholder="O'qituvchi ismi">
         </div>
         <div>
-          <label class="block text-sm mb-1 font-medium">Xona raqami</label>
-          <input type="text" id="roomInput" class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Masalan: 204">
+          <label class="block text-sm mb-1 font-medium">Xona</label>
+          <input type="text" id="roomInput" class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none text-base" placeholder="Xona raqami">
         </div>
 
-        <div class="flex justify-between items-center pt-4 border-t dark:border-gray-700">
-          <button type="button" id="deleteBtn" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 active:scale-95 shadow-md">O'chirish</button>
-          <div class="flex gap-2">
-            <button type="button" id="closeModalBtn" class="px-4 py-2 border rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-95">Bekor qilish</button>
-            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:scale-95 shadow-md">Saqlash</button>
+        <div class="flex flex-col-reverse sm:flex-row justify-between items-stretch sm:items-center gap-3 pt-4 border-t dark:border-gray-700">
+          <button type="button" id="deleteBtn" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 active:scale-95 shadow-md w-full sm:w-auto order-2 sm:order-1">🗑️ O'chirish</button>
+          <div class="flex flex-col sm:flex-row gap-2 order-1 sm:order-2 w-full sm:w-auto">
+            <button type="button" id="closeModalBtn" class="px-4 py-2 border rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-95 w-full sm:w-auto">Bekor qilish</button>
+            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:scale-95 shadow-md w-full sm:w-auto">💾 Saqlash</button>
           </div>
         </div>
       </form>
@@ -186,14 +303,14 @@
       const isAdmin = !!adminToken;
 
       if (isAdmin) {
-        roleBadge.className = "text-xs px-2.5 py-1 rounded-full bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 font-semibold";
-        roleBadge.textContent = "⚡ Admin rejimi (Tahrirlash faol)";
+        roleBadge.className = "header-badge text-[10px] md:text-xs px-2 py-1 rounded-full bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 font-semibold whitespace-nowrap";
+        roleBadge.textContent = "⚡ Admin";
         logoutBtn.classList.remove('hidden');
         aiUploadBtn.classList.remove('hidden');
         aiUploadBtn.classList.add('flex');
       } else {
-        roleBadge.className = "text-xs px-2.5 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 font-semibold";
-        roleBadge.textContent = "👁️ O'quvchi (Ko'rish rejimi)";
+        roleBadge.className = "header-badge text-[10px] md:text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 font-semibold whitespace-nowrap";
+        roleBadge.textContent = "👁️ O'quvchi";
         logoutBtn.classList.add('hidden');
         aiUploadBtn.classList.add('hidden');
         aiUploadBtn.classList.remove('flex');
@@ -201,7 +318,7 @@
 
       days.forEach((day, index) => {
         const dayCard = document.createElement('div');
-        dayCard.className = 'bg-white dark:bg-gray-800 rounded-2xl shadow-md hover:shadow-lg p-4 flex flex-col justify-between animate-fade-in transition-all duration-300';
+        dayCard.className = 'day-card bg-white dark:bg-gray-800 rounded-xl md:rounded-2xl shadow-md hover:shadow-lg p-3 md:p-4 flex flex-col justify-between animate-fade-in transition-all duration-300';
         dayCard.style.animationDelay = `${index * 0.08}s`;
         
         const currentCount = serverData.lessonCounts?.[selectedClass]?.[day] || 6;
@@ -209,38 +326,38 @@
         let lessonsHTML = '';
         for (let i = 0; i < currentCount; i++) {
           const lesson = serverData.timetable?.[selectedClass]?.[day]?.[i];
-          const hasData = lesson && lesson.subject;
+          const hasData = lesson && lesson.subject && lesson.subject.trim() !== '';
 
           const cursorClass = isAdmin ? 'cursor-pointer hover:scale-[1.02] active:scale-[0.98] hover:border-blue-500 hover:shadow-md' : 'cursor-default';
           const clickHandler = isAdmin ? `onclick="openModal('${day}', ${i})"` : '';
 
           lessonsHTML += `
             <div ${clickHandler} 
-                 class="p-3 rounded-xl border-2 ${hasData ? 'border-blue-500/30 bg-blue-50/50 dark:bg-gray-700/40 dark:border-blue-400/30' : 'border-dashed border-gray-300 dark:border-gray-600'} ${cursorClass} transition-all duration-200 min-h-[80px] flex flex-col justify-between mb-3">
+                 class="lesson-card p-2 md:p-3 rounded-xl border-2 ${hasData ? 'border-blue-500/30 bg-blue-50/50 dark:bg-gray-700/40 dark:border-blue-400/30' : 'border-dashed border-gray-300 dark:border-gray-600'} ${cursorClass} transition-all duration-200 min-h-[60px] md:min-h-[80px] flex flex-col justify-between mb-2 md:mb-3">
               <div class="flex justify-between items-start">
-                <span class="text-xs font-bold text-gray-400">${i + 1}-soat</span>
-                ${lesson?.room ? `<span class="text-xs bg-gray-200 dark:bg-gray-600 px-1.5 py-0.5 rounded-md font-medium">${lesson.room}-xona</span>` : ''}
+                <span class="hour-badge text-[10px] md:text-xs font-bold text-gray-400">${i + 1}</span>
+                ${lesson?.room ? `<span class="room-badge text-[10px] md:text-xs bg-gray-200 dark:bg-gray-600 px-1.5 py-0.5 rounded-md font-medium">${lesson.room}</span>` : ''}
               </div>
               ${hasData ? `
                 <div class="mt-1">
-                  <div class="font-bold text-sm leading-tight text-gray-800 dark:text-gray-100">${lesson.subject}</div>
-                  <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">${lesson.teacher || ''}</div>
+                  <div class="subject-text font-bold text-sm md:text-base leading-tight text-gray-800 dark:text-gray-100">${lesson.subject}</div>
+                  <div class="teacher-text text-[10px] md:text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">${lesson.teacher || ''}</div>
                 </div>
               ` : `
-                <div class="text-xs text-gray-400 text-center py-1 font-medium">${isAdmin ? "+ Qo'shish" : '—'}</div>
+                <div class="text-[10px] md:text-xs text-gray-400 text-center py-1 font-medium">${isAdmin ? "+ Qo'shish" : '—'}</div>
               `}
             </div>
           `;
         }
 
         const adminControlsHTML = isAdmin ? `
-          <div class="flex gap-2 pt-3 border-t dark:border-gray-700 mt-1">
-            <button onclick="changeLessonCount('${day}', 1)" class="flex-1 py-1.5 px-2 text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 rounded-lg hover:bg-blue-200 active:scale-95 font-semibold transition-all">
-              + 1 soat
+          <div class="flex gap-2 pt-2 md:pt-3 border-t dark:border-gray-700 mt-1">
+            <button onclick="changeLessonCount('${day}', 1)" class="control-btn flex-1 py-1.5 px-2 text-[10px] md:text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 rounded-lg hover:bg-blue-200 active:scale-95 font-semibold transition-all">
+              +1
             </button>
             ${currentCount > 1 ? `
-              <button onclick="changeLessonCount('${day}', -1)" title="Soatni kamaytirish" class="py-1.5 px-3 text-xs bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 active:scale-95 font-semibold transition-all">
-                -
+              <button onclick="changeLessonCount('${day}', -1)" class="control-btn py-1.5 px-3 text-[10px] md:text-xs bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 active:scale-95 font-semibold transition-all">
+                −
               </button>
             ` : ''}
           </div>
@@ -248,7 +365,7 @@
 
         dayCard.innerHTML = `
           <div>
-            <h2 class="text-lg font-bold text-center mb-3 pb-2 border-b dark:border-gray-700 text-blue-600 dark:text-blue-400 tracking-wide">${day}</h2>
+            <h2 class="day-title text-base md:text-lg font-bold text-center mb-2 md:mb-3 pb-1 md:pb-2 border-b dark:border-gray-700 text-blue-600 dark:text-blue-400 tracking-wide">${day}</h2>
             <div>${lessonsHTML}</div>
           </div>
           ${adminControlsHTML}
@@ -269,7 +386,7 @@
       formData.append('className', selectedClass);
 
       const originalBtnText = aiUploadBtn.innerHTML;
-      aiUploadBtn.innerHTML = "⏳ AI o'qimoqda...";
+      aiUploadBtn.innerHTML = "⏳";
       aiUploadBtn.disabled = true;
 
       try {
@@ -302,7 +419,7 @@
       loginError.classList.add('hidden');
       passwordInput.value = '';
       loginModal.classList.remove('hidden');
-      passwordInput.focus();
+      setTimeout(() => passwordInput.focus(), 100);
     }
 
     document.addEventListener('keydown', (e) => {
@@ -378,12 +495,13 @@
       currentCell = { day, lessonIndex };
       const lesson = serverData.timetable?.[selectedClass]?.[day]?.[lessonIndex] || {};
 
-      modalTitle.textContent = `Darsni tahrirlash (${day}, ${lessonIndex + 1}-soat)`;
+      modalTitle.textContent = `✏️ ${day}, ${lessonIndex + 1}-soat`;
       subjectInput.value = lesson.subject || '';
       teacherInput.value = lesson.teacher || '';
       roomInput.value = lesson.room || '';
 
       lessonModal.classList.remove('hidden');
+      setTimeout(() => subjectInput.focus(), 100);
     };
 
     closeModalBtn.addEventListener('click', () => lessonModal.classList.add('hidden'));
@@ -405,9 +523,9 @@
           day,
           lessonIndex,
           lessonData: {
-            subject: subjectInput.value,
-            teacher: teacherInput.value,
-            room: roomInput.value
+            subject: subjectInput.value.trim(),
+            teacher: teacherInput.value.trim(),
+            room: roomInput.value.trim()
           }
         })
       });
@@ -420,17 +538,19 @@
       if (!adminToken) return;
       const { day, lessonIndex } = currentCell;
 
-      await fetch('/api/timetable/lesson', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${adminToken}`
-        },
-        body: JSON.stringify({ className: selectedClass, day, lessonIndex })
-      });
+      if (confirm(`"${day}" kuni ${lessonIndex + 1}-soatni o'chirishni xohlaysizmi?`)) {
+        await fetch('/api/timetable/lesson', {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${adminToken}`
+          },
+          body: JSON.stringify({ className: selectedClass, day, lessonIndex })
+        });
 
-      lessonModal.classList.add('hidden');
-      fetchTimetable();
+        lessonModal.classList.add('hidden');
+        fetchTimetable();
+      }
     });
 
     classSelect.addEventListener('change', (e) => {
@@ -441,7 +561,16 @@
     themeToggleBtn.addEventListener('click', () => {
       document.documentElement.classList.toggle('dark');
       const isDark = document.documentElement.classList.contains('dark');
-      themeToggleBtn.textContent = isDark ? '☀️ Yorug\'' : '🌙 Qorong\'u';
+      themeToggleBtn.textContent = isDark ? '☀️' : '🌙';
+    });
+
+    // Telefonda modal yopish uchun tashqariga bosganda
+    loginModal.addEventListener('click', (e) => {
+      if (e.target === loginModal) loginModal.classList.add('hidden');
+    });
+    
+    lessonModal.addEventListener('click', (e) => {
+      if (e.target === lessonModal) lessonModal.classList.add('hidden');
     });
 
     async function downloadAsImage() {
@@ -450,14 +579,18 @@
 
       const downloadBtn = document.getElementById('downloadBtn');
       const originalText = downloadBtn.innerHTML;
-      downloadBtn.innerHTML = '⏳ Tayyorlanmoqda...';
+      downloadBtn.innerHTML = '⏳';
       downloadBtn.disabled = true;
 
       try {
         const canvas = await html2canvas(element, {
-          scale: 2,
+          scale: window.innerWidth < 768 ? 1.5 : 2,
           useCORS: true,
-          backgroundColor: document.documentElement.classList.contains('dark') ? '#111827' : '#f3f4f6'
+          backgroundColor: document.documentElement.classList.contains('dark') ? '#111827' : '#f3f4f6',
+          width: element.scrollWidth,
+          height: element.scrollHeight,
+          windowWidth: element.scrollWidth,
+          windowHeight: element.scrollHeight
         });
 
         const link = document.createElement('a');
