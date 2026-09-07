@@ -18,9 +18,6 @@ const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'maktab_dars_jadvali_secret_key_2026';
 const DATA_FILE = path.join(__dirname, 'data.json');
 
-// Gemini AI Klientini sozlash
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -67,18 +64,22 @@ function authenticateToken(req, res, next) {
 
 // 1. Admin login
 app.post('/api/admin/login', (req, res) => {
-  const { password } = req.body;
-  const envPassword = process.env.ADMIN_PASSWORD;
+  try {
+    const { password } = req.body || {};
+    const envPassword = process.env.ADMIN_PASSWORD;
 
-  const validPassword = envPassword ? String(envPassword).trim() : 'admin123';
-  const inputPassword = password ? String(password).trim() : '';
+    const validPassword = envPassword ? String(envPassword).trim() : 'admin123';
+    const inputPassword = password ? String(password).trim() : '';
 
-  if (inputPassword === validPassword) {
-    const token = jwt.sign({ role: 'admin' }, JWT_SECRET, { expiresIn: '24h' });
-    return res.json({ success: true, token });
+    if (inputPassword === validPassword) {
+      const token = jwt.sign({ role: 'admin' }, JWT_SECRET, { expiresIn: '24h' });
+      return res.json({ success: true, token });
+    }
+
+    res.status(401).json({ error: "Parol noto'g'ri!" });
+  } catch (err) {
+    res.status(500).json({ error: "Login jarayonida xatolik yuz berdi." });
   }
-  
-  res.status(401).json({ error: "Parol noto'g'ri!" });
 });
 
 // 2. Dars jadvalini olish
@@ -131,9 +132,12 @@ app.post('/api/timetable/upload', authenticateToken, upload.single('file'), asyn
       return res.status(400).json({ error: "Sinf tanlanmagan!" });
     }
 
-    if (!process.env.GEMINI_API_KEY) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
       return res.status(500).json({ error: "Render platformasida GEMINI_API_KEY sozlanmagan!" });
     }
+
+    const ai = new GoogleGenAI({ apiKey });
 
     const prompt = `Ushbu rasmdagi/hujjatdagi "${className}" sinfining dars jadvalini aniq o'qib oling.
 Javobni FAQAT QUYIDAGI SOF JSON FORMATIDA qaytaring (hech qanday markdown belgilari va ortiqcha tushuntirishlarsiz):
@@ -156,13 +160,11 @@ Ahamiyat bering:
     };
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3.6-flash',
+      model: 'gemini-2.5-flash',
       contents: [prompt, imagePart]
     });
 
     let text = response.text.trim();
-    
-    // Markdown bloklarini toza va xatosiz olib tashlash
     text = text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
 
     const parsedTimetable = JSON.parse(text);
