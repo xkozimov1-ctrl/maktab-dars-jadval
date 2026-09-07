@@ -77,7 +77,7 @@ app.post('/api/admin/login', (req, res) => {
   res.status(401).json({ error: "Parol noto'g'ri!" });
 });
 
-// 2. Dars jadvalini olish (Abituriyent va O'quvchilar uchun ochiq)
+// 2. Dars jadvalini olish
 app.get('/api/timetable/:className', async (req, res) => {
   try {
     const data = await readData();
@@ -151,9 +151,9 @@ Ahamiyat bering:
       }
     };
 
-    // Gemini 2.5 Flash modelidan foydalanish
+    // Rasmiy so'nggi Gemini modeli: gemini-3.6-flash
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.6-flash',
       contents: [prompt, imagePart]
     });
 
