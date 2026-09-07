@@ -510,30 +510,127 @@
 
     init();
   </script>
-  <!-- index.html faylingizning pastki qismiga qo'shish uchun: -->
+<!-- ===== FOOTER ===== -->
+<footer class="max-w-7xl mx-auto w-full mt-12">
+  <div class="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-800 dark:via-gray-800 dark:to-gray-800 rounded-2xl shadow-lg p-6 md:p-8 border border-blue-100/50 dark:border-gray-700/50">
+    
+    <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+      <!-- Chap tomon - Muallif -->
+      <div class="flex flex-col items-center md:items-start gap-1">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">👨‍💻</span>
+          <span class="text-sm text-gray-600 dark:text-gray-400">Yaratuvchi:</span>
+          <span class="text-base font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Kozimov Xushnudbek
+          </span>
+        </div>
+        <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+          <span>📅 2026</span>
+          <span>•</span>
+          <span>📚 Maktab Dars Jadvali v1.0</span>
+        </div>
+      </div>
 
-<footer class="bg-slate-900 text-slate-300 py-6 border-t border-slate-800 mt-auto">
-  <div class="max-w-7xl mx-auto px-4 text-center sm:flex sm:justify-between sm:items-center">
-    <div class="mb-4 sm:mb-0">
-      <p class="text-sm">
-        Dasturchi: <span class="font-semibold text-white">Kozimov Xushnudbek</span>
+      <!-- O'ng tomon - Ijtimoiy tarmoqlar va Telegram -->
+      <div class="flex flex-wrap items-center gap-3 justify-center">
+        <!-- Telegram Bot -->
+        <a href="https://t.me/maktab1son_bot" 
+           target="_blank" 
+           class="group relative inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-md hover:shadow-xl active:scale-95 font-medium text-sm">
+          <span class="text-lg">🤖</span>
+          <span>Telegram Bot</span>
+          <span class="absolute -top-1 -right-1 flex h-3 w-3">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+          </span>
+        </a>
+
+        <!-- GitHub (agar mavjud bo'lsa) -->
+        <a href="Thekozimov-ctrl" 
+           target="_blank" 
+           class="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-300 hover:shadow-md active:scale-95 text-sm font-medium">
+          <span class="text-lg">🐙</span>
+          <span>GitHub</span>
+        </a>
+
+        <!-- LinkedIn (agar mavjud bo'lsa) -->
+        <a href="#" 
+           target="_blank" 
+           class="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-300 hover:shadow-md active:scale-95 text-sm font-medium">
+          <span class="text-lg">💼</span>
+          <span>LinkedIn</span>
+        </a>
+
+        <!-- Telegram Profile -->
+        <a href="https://t.me/thekzmv" 
+           target="_blank" 
+           class="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-300 hover:shadow-md active:scale-95 text-sm font-medium">
+          <span class="text-lg">📱</span>
+          <span>@thekzmv</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Ajratuvchi chiziq -->
+    <div class="relative my-5">
+      <div class="absolute inset-0 flex items-center">
+        <div class="w-full border-t border-blue-200/50 dark:border-gray-700/50"></div>
+      </div>
+      <div class="relative flex justify-center">
+        <span class="px-4 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 dark:bg-gray-800 text-xs text-gray-400 dark:text-gray-500">
+          ⚡ Powered by Node.js & Express
+        </span>
+      </div>
+    </div>
+
+    <!-- Pastki qism - 3 ta ustun -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
+      <!-- 1-ustun: Qisqacha -->
+      <div class="text-center md:text-left">
+        <h4 class="font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center justify-center md:justify-start gap-2">
+          <span>📖</span> Loyiha haqida
+        </h4>
+        <p class="text-gray-500 dark:text-gray-400 text-xs leading-relaxed">
+          Maktab dars jadvallarini onlayn ko'rish va boshqarish uchun zamonaviy platforma.
+        </p>
+      </div>
+
+      <!-- 2-ustun: Tezkor linklar -->
+      <div class="text-center">
+        <h4 class="font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center justify-center gap-2">
+          <span>🔗</span> Tezkor linklar
+        </h4>
+        <div class="flex flex-wrap justify-center gap-3">
+          <a href="#" class="text-blue-600 dark:text-blue-400 hover:underline text-xs">Bosh sahifa</a>
+          <a href="#" class="text-blue-600 dark:text-blue-400 hover:underline text-xs">Dars jadvali</a>
+          <a href="#" class="text-blue-600 dark:text-blue-400 hover:underline text-xs">Admin</a>
+        </div>
+      </div>
+
+      <!-- 3-ustun: Aloqa -->
+      <div class="text-center md:text-right">
+        <h4 class="font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center justify-center md:justify-end gap-2">
+          <span>📬</span> Aloqa
+        </h4>
+        <div class="text-gray-500 dark:text-gray-400 text-xs space-y-1">
+          <div>📧 kozimovxushnudbek1.gmail.com</div>
+          <div>📱 +998 50 404 24 12</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Copyright -->
+    <div class="mt-5 pt-4 border-t border-blue-200/30 dark:border-gray-700/30 text-center">
+      <p class="text-xs text-gray-400 dark:text-gray-500">
+        © 2025 <span class="font-medium text-gray-600 dark:text-gray-400">Kozimov Xushnudbek</span>. 
+        Barcha huquqlar himoyalangan. 
+        <span class="hidden sm:inline">|</span> 
+        <span class="text-[10px]">❤️ O'zbekiston uchun yaratilgan</span>
       </p>
     </div>
-    
-    <div>
-      <a 
-        href="https://t.me/maktab1son_bot" 
-        target="_blank" 
-        rel="noopener noreferrer" 
-        class="inline-flex items-center gap-2 text-sm text-sky-400 hover:text-sky-300 font-medium transition-colors"
-      >
-        <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
-          <path d="M12 0C5.37 0 0 5.37 0 12s5.37 12 12 12 12-5.37 12-12S18.63 0 12 0zm5.56 8.16l-2.02 9.52c-.15.68-.56.84-1.13.52l-3.1-2.29-1.5 1.44c-.17.17-.31.31-.63.31l.22-3.17 5.77-5.21c.25-.22-.05-.34-.39-.12l-7.13 4.49-3.08-.96c-.67-.21-.68-.67.14-.99l12.04-4.64c.56-.2 1.05.14.83.92z"/>
-        </svg>
-        <span>@maktab1son_bot</span>
-      </a>
-    </div>
+
   </div>
 </footer>
+<!-- ===== FOOTER END ===== -->
 </body>
 </html>
