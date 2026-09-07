@@ -65,12 +65,11 @@ function authenticateToken(req, res, next) {
 
 // ================= API ENDPOINTS =================
 
-// 1. Admin login (Moslashuvchan parol va turdagi ma'lumotlarni qabul qilish)
+// 1. Admin login
 app.post('/api/admin/login', (req, res) => {
   const { password } = req.body;
   const envPassword = process.env.ADMIN_PASSWORD;
 
-  // Agar Render Environment Variable'da ADMIN_PASSWORD o'rnatilmagan bo'lsa, defolt 'admin123' ishlaydi
   const validPassword = envPassword ? String(envPassword).trim() : 'admin123';
   const inputPassword = password ? String(password).trim() : '';
 
@@ -137,7 +136,7 @@ app.post('/api/timetable/upload', authenticateToken, upload.single('file'), asyn
     }
 
     const prompt = `Ushbu rasmdagi/hujjatdagi "${className}" sinfining dars jadvalini aniq o'qib oling.
-Javobni FAQAT QUYIDAGI SOF JSON FORMATIDA qaytaring (hech qanday markdown \`\`\`json belgilari va ortiqcha tushuntirishlarsiz):
+Javobni FAQAT QUYIDAGI SOF JSON FORMATIDA qaytaring (hech qanday markdown belgilari va ortiqcha tushuntirishlarsiz):
 {
   "Dushanba": [{"subject": "Fan nomi", "teacher": "O'qituvchi", "room": "Xona"}],
   "Seshanba": [],
@@ -162,5 +161,39 @@ Ahamiyat bering:
     });
 
     let text = response.text.trim();
-    if (text.startsWith('```json')) {
-      text = text.replace(/^
+    
+    // Markdown bloklarini toza va xatosiz olib tashlash
+    text = text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
+
+    const parsedTimetable = JSON.parse(text);
+
+    const data = await readData();
+    if (!data.timetable) data.timetable = {};
+    if (!data.lessonCounts) data.lessonCounts = {};
+
+    data.timetable[className] = parsedTimetable;
+    
+    if (!data.lessonCounts[className]) data.lessonCounts[className] = {};
+    Object.keys(parsedTimetable).forEach(day => {
+      data.lessonCounts[className][day] = parsedTimetable[day].length;
+    });
+
+    await writeData(data);
+    res.json({ success: true, message: `${className} sinfi uchun jadval AI orqali to'ldirildi!` });
+
+  } catch (error) {
+    console.error("AI Upload xatosi:", error);
+    res.status(500).json({ 
+      error: error.message || "Faylni AI orqali tahlil qilishda xatolik yuz berdi." 
+    });
+  }
+});
+
+// SPA router
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.listen(PORT, () => {
+  console.log(`Server ${PORT}-portda muvaffaqiyatli ishga tushdi.`);
+});
