@@ -24,15 +24,16 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Multer (Xotirada fayllarni saqlash)
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 } // Maksimal 10MB
+  limits: { fileSize: 10 * 1024 * 1024 }
 });
 
-// Ma'lumotlarni o'qish va yozish funksiyalari
+// Ma'lumotlarni o'qish va yozish
 async function readData() {
   try {
     const data = await fs.readFile(DATA_FILE, 'utf8');
@@ -64,12 +65,16 @@ function authenticateToken(req, res, next) {
 
 // ================= API ENDPOINTS =================
 
-// 1. Admin login
+// 1. Admin login (Moslashuvchan parol va turdagi ma'lumotlarni qabul qilish)
 app.post('/api/admin/login', (req, res) => {
   const { password } = req.body;
-  const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+  const envPassword = process.env.ADMIN_PASSWORD;
 
-  if (password === adminPassword) {
+  // Agar Render Environment Variable'da ADMIN_PASSWORD o'rnatilmagan bo'lsa, defolt 'admin123' ishlaydi
+  const validPassword = envPassword ? String(envPassword).trim() : 'admin123';
+  const inputPassword = password ? String(password).trim() : '';
+
+  if (inputPassword === validPassword) {
     const token = jwt.sign({ role: 'admin' }, JWT_SECRET, { expiresIn: '24h' });
     return res.json({ success: true, token });
   }
@@ -151,7 +156,6 @@ Ahamiyat bering:
       }
     };
 
-    // Rasmiy so'nggi Gemini modeli: gemini-3.6-flash
     const response = await ai.models.generateContent({
       model: 'gemini-3.6-flash',
       contents: [prompt, imagePart]
@@ -159,40 +163,4 @@ Ahamiyat bering:
 
     let text = response.text.trim();
     if (text.startsWith('```json')) {
-      text = text.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-    } else if (text.startsWith('```')) {
-      text = text.replace(/^```\s*/, '').replace(/\s*```$/, '');
-    }
-
-    const parsedTimetable = JSON.parse(text);
-
-    const data = await readData();
-    if (!data.timetable) data.timetable = {};
-    if (!data.lessonCounts) data.lessonCounts = {};
-
-    data.timetable[className] = parsedTimetable;
-    
-    if (!data.lessonCounts[className]) data.lessonCounts[className] = {};
-    Object.keys(parsedTimetable).forEach(day => {
-      data.lessonCounts[className][day] = parsedTimetable[day].length;
-    });
-
-    await writeData(data);
-    res.json({ success: true, message: `${className} sinfi uchun jadval AI orqali to'ldirildi!` });
-
-  } catch (error) {
-    console.error("AI Upload xatosi:", error);
-    res.status(500).json({ 
-      error: error.message || "Faylni AI orqali tahlil qilishda xatolik yuz berdi." 
-    });
-  }
-});
-
-// SPA router qo'llab-quvvatlash
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-app.listen(PORT, () => {
-  console.log(`Server ${PORT}-portda muvaffaqiyatli ishga tushdi.`);
-});
+      text = text.replace(/^
